@@ -54,7 +54,7 @@ const { disabled = false } = defineProps<Props>()
         class="inline-flex items-center justify-center rounded-lg border-none bg-gray-100 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-100"
       >
         <IconRefresh
-          class="h-4 w-4 -scale-100 text-white"
+          class="h-4 w-4 -scale-100 text-gray-900 decoration-gray-400 decoration-dashed outline-none hover:underline focus:ring-2 focus:ring-blue-600 dark:text-gray-100 dark:focus:ring-blue-600"
           :class="{ 'animate-spin': refreshingModel }"
         />
       </button>
