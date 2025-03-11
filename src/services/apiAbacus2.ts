@@ -1,17 +1,6 @@
 import { ref } from 'vue'
 import { baseUrl } from './appConfig.ts'
 
-export type ConversationRequest = {
-  requestId: string;
-  deploymentConversationId: string;
-  message: string;
-  isDesktop: boolean;
-  chatConfig: {
-    timezone: string;
-    language: string;
-  };
-  externalApplicationId: string;
-}
 export type SSESegment = {
   type: string;
   segment?: string;
@@ -118,7 +107,7 @@ type DocInfo = {
   documentUploadId: string;
 };
 
-export type Message = {
+export type History = {
   regenerateAttempt: number;
   inputParams: InputParams;
   role: 'USER' | 'BOT';
@@ -143,6 +132,58 @@ export type AbacusResponse<T> = {
   errorType?: string;
 };
 
+export type ChatConfig = {
+  timezone: string;
+  language: string;
+}
+
+export type MessageChatRequest = {
+  requestId: string;
+  deploymentConversationId: string;
+  message: string;
+  isDesktop: boolean;
+  chatConfig: ChatConfig;
+  externalApplicationId: string;
+}
+
+// Tipo base para todos los mensajes
+interface BaseStreamMessage {
+  counter?: number;
+  messageId?: string;
+  message_id?: string;
+}
+
+// Para mensajes de ping
+interface PingMessage extends BaseStreamMessage {
+  ping: boolean;
+}
+
+// Para mensajes de texto
+export interface TextMessage extends BaseStreamMessage {
+  type: "text";
+  segment: string;
+}
+
+// Para mensajes de análisis
+interface AnalysisMessage extends BaseStreamMessage {
+  type: "text";
+  temp: boolean;
+  isSpinny: boolean;
+  segment: string;
+  title: string;
+  isGeneratingImage: boolean;
+}
+
+export interface StreamResponse {
+  success: boolean;
+  end: boolean;
+  token: null | string;
+  counter: number;
+}
+
+// Tipo unión para manejar cualquier tipo de mensaje
+export type StreamMessage = StreamResponse | PingMessage | TextMessage | AnalysisMessage;
+
 // Define a method to get the full API URL for a given path
 const getApiUrl = (path: string) =>
   `${'http://3.21.99.235:8000'}${path}`
@@ -153,7 +194,7 @@ const signal = ref<AbortSignal>(abortController.value.signal)
 export const useApi = () => {
   const error = ref(null)
 
-  const generateChat = async (request: ConversationRequest, onDataReceived: (data: any) => void): Promise<any[]> => {
+  const generateChat = async (request: MessageChatRequest, onDataReceived: (data: any) => void): Promise<any[]> => {
     const res = await fetch(getApiUrl('/conversations/send-message-sse'), {
       method: 'POST',
       headers: {
@@ -168,7 +209,7 @@ export const useApi = () => {
     }
 
     const reader = res.body?.getReader()
-    let results: SSEChatPartResponse[] = []
+    let results: StreamMessage[] = []
 
     if (reader) {
       while (true) {
@@ -179,7 +220,7 @@ export const useApi = () => {
 
         try {
           const chunk = new TextDecoder().decode(value)
-          const parsedChunk: SSEChatPartResponse = JSON.parse(chunk)
+          const parsedChunk: StreamMessage = JSON.parse(chunk)
 
           onDataReceived(parsedChunk)
           results.push(parsedChunk)
