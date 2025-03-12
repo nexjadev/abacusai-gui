@@ -20,14 +20,27 @@ export function useChats() {
   const hasMessages = computed(() => messages.value.length > 0)
 
   // Methods for state mutations
-  const setActiveChat = (chat: Conversation) => (activeChat.value = chat)
-  // const setMessages = (newMessages: Message[]) => (messages.value = newMessages)
+  const setActiveChat = (chat: Conversation) => {
+    activeChat.value = chat
+    if (chat.history) {
+      messages.value = chat.history
+    } else {
+      messages.value = []
+    }
+  }
+
+  const setMessages = (newMessages: History[]) => {
+    messages.value = newMessages
+    if (activeChat.value) {
+      activeChat.value.history = newMessages
+    }
+  }
 
   const initialize = async () => {
     try {
       chats.value = await getAllChats(currentModel.value, '30')
       if (chats.value.length == 0) {
-        await startNewChat('New chat')
+        // await startNewChat('New chat')
       }
     } catch (error) {
       console.error('Failed to initialize chats:', error)
@@ -42,7 +55,7 @@ export function useChats() {
         // const chatMessages = await dbLayer.getMessages(chatId)
         // setMessages(chatMessages)
         if (activeChat.value) {
-          await switchModel(activeChat.value.deploymentId)
+          await switchModel(activeChat.value.deploymentId, activeChat.value.externalApplicationId)
         }
       }
     } catch (error) {
@@ -50,8 +63,9 @@ export function useChats() {
     }
   }
 
-  const switchModel = async (deploymentId: string) => {
+  const switchModel = async (deploymentId: string, externalApplicationId: string) => {
     currentModel.value = deploymentId
+    currentExtApp.value = externalApplicationId
     if (!activeChat.value) return
 
     try {
@@ -136,15 +150,15 @@ export function useChats() {
       // message.id = await dbLayer.addMessage(message)
       // messages.value.push(message)
 
-      await generate(
-        message,
-        (data) => handleAiPartialResponse(data, currentChatId),
-        (data) => handleAiCompletion(data, currentChatId),
-      )
+      // await generate(
+      //   message,
+      //   (data) => handleAiPartialResponse(data, currentChatId),
+      //   (data) => handleAiCompletion(data, currentChatId),
+      // )
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          ongoingAiMessages.value.delete(currentChatId)
+          // ongoingAiMessages.value.delete(currentChatId)
           return
         }
       }
@@ -181,25 +195,25 @@ export function useChats() {
     // }
   }
 
-  const handleAiPartialResponse = (data: ChatPartResponse, chatId: number) => {
-    ongoingAiMessages.value.has(chatId)
-      ? appendToAiMessage(data.message.content, chatId)
-      : startAiMessage(data.message.content, chatId)
-  }
+  // const handleAiPartialResponse = (data: ChatPartResponse, chatId: number) => {
+  //   ongoingAiMessages.value.has(chatId)
+  //     ? appendToAiMessage(data.message.content, chatId)
+  //     : startAiMessage(data.message.content, chatId)
+  // }
 
-  const handleAiCompletion = async (data: ChatCompletedResponse, chatId: number) => {
-    const aiMessage = ongoingAiMessages.value.get(chatId)
-    if (aiMessage) {
-      try {
-        ongoingAiMessages.value.delete(chatId)
-      } catch (error) {
-        console.error('Failed to finalize AI message:', error)
-      }
-    } else {
-      console.error('no ongoing message to finalize:')
-      debugger
-    }
-  }
+  // const handleAiCompletion = async (data: ChatCompletedResponse, chatId: number) => {
+  //   const aiMessage = ongoingAiMessages.value.get(chatId)
+  //   if (aiMessage) {
+  //     try {
+  //       ongoingAiMessages.value.delete(chatId)
+  //     } catch (error) {
+  //       console.error('Failed to finalize AI message:', error)
+  //     }
+  //   } else {
+  //     console.error('no ongoing message to finalize:')
+  //     debugger
+  //   }
+  // }
 
   const wipeDatabase = async () => {
     try {
@@ -218,7 +232,7 @@ export function useChats() {
     }
   }
 
-  const deleteChat = async (chatId: number) => {
+  const deleteChat = async (deploymentConversationId: string) => {
     try {
       // await dbLayer.deleteChat(chatId)
       // await dbLayer.deleteMessagesOfChat(chatId)
@@ -275,7 +289,7 @@ export function useChats() {
 
   return {
     chats,
-    sortedChats,
+    // sortedChats,
     activeChat,
     messages,
     hasMessages,
@@ -291,7 +305,7 @@ export function useChats() {
     initialize,
     wipeDatabase,
     abort,
-    exportChats,
-    importChats,
+    // exportChats,
+    // importChats,
   }
 }

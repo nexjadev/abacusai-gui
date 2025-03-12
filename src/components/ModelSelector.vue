@@ -1,29 +1,25 @@
 <script setup lang="ts">
 import { IconRefresh } from '@tabler/icons-vue'
-import { useChats } from '../services/chat.ts'
-import { useAI } from '../services/useAI.ts'
+import { useChats } from '../services/chatAbacus2.ts'
+import { useAI } from '../services/useAbacus.ts'
 import { ref } from 'vue'
-import { currentModel } from '../services/appConfig'
+import { currentModel } from '../services/appConfigAbacus.ts'
 
 const { activeChat, switchModel, hasMessages } = useChats()
 const { refreshModels, availableModels } = useAI()
 
 const refreshingModel = ref(false)
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const performRefreshModel = async () => {
   refreshingModel.value = true
-  await Promise.all([refreshModels(), sleep(1000)])
-
-  refreshModels().then(() => {
-    refreshingModel.value = false
-  })
+  await refreshModels()
+  refreshingModel.value = false
 }
 
 const handleModelChange = (event: Event) => {
   const wip = event.target as HTMLSelectElement
   console.log('switch', wip.value)
-  switchModel(wip.value)
+  // switchModel(wip.value)
 }
 
 type Props = {
@@ -37,12 +33,12 @@ const { disabled = false } = defineProps<Props>()
     <div class="inline-flex items-center gap-2">
       <select
         :disabled="disabled"
-        :value="activeChat?.model ?? currentModel"
+        :value="activeChat?.deploymentId ?? currentModel"
         @change="handleModelChange"
         class="w-full cursor-pointer rounded-lg bg-white py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-100"
       >
         <option :value="undefined" disabled selected>Select a model</option>
-        <option v-for="model in availableModels" :value="model.name">
+        <option v-for="model in availableModels" :value="model.deploymentId">
           {{ model.name }}
         </option>
       </select>

@@ -2,17 +2,18 @@
 import SystemMessage from './Messages/SystemMessage.vue'
 import UserMessage from './Messages/UserMessage.vue'
 import AiMessage from './Messages/AiMessage.vue'
-import { Message } from '../services/database.ts'
+import { History } from '../services/apiAbacus2.ts'
 
 type Props = {
-  message: Message
+  message: History
 }
 
 const { message } = defineProps<Props>()
 </script>
 
 <template>
-  <SystemMessage v-if="message.role == 'system'" :message="message" />
-  <UserMessage v-if="message.role == 'user'" :message="message" />
-  <AiMessage v-if="message.role == 'assistant'" :message="message" />
+  <!-- <SystemMessage v-if="message.role == 'system'" :message="message" /> -->
+  <UserMessage v-if="message.role == 'USER'" :message="message" />
+  <!-- <AiMessage v-if="message.role == 'assistant'" :message="message" /> -->
+  <AiMessage v-if="message.role == 'BOT'" :message="message" />
 </template>

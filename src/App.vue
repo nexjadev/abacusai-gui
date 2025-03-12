@@ -2,19 +2,20 @@
 import Sidebar from './components/Sidebar.vue'
 import ChatInput from './components/ChatInput.vue'
 import ChatMessages from './components/ChatMessages.vue'
-import SystemPrompt from './components/SystemPrompt.vue'
+// import SystemPrompt from './components/SystemPrompt.vue'
 import ModelSelector from './components/ModelSelector.vue'
 import {
+  currentExtApp,
   currentModel,
   isDarkMode,
   isSettingsOpen,
   isSystemPromptOpen,
-} from './services/appConfig.ts'
+} from './services/appConfigAbacus.ts'
 import { nextTick, onMounted, ref } from 'vue'
-import { useAI } from './services/useAI.ts'
-import { useChats } from './services/chat.ts'
-import TextInput from './components/Inputs/TextInput.vue'
-import Settings from './components/Settings.vue'
+import { useAI } from './services/useAbacus.ts'
+import { useChats } from './services/chatAbacus2.ts'
+// import TextInput from './components/Inputs/TextInput.vue'
+// import Settings from './components/Settings.vue'
 
 const { refreshModels, availableModels } = useAI()
 const { activeChat, renameChat, switchModel, initialize } = useChats()
@@ -40,15 +41,19 @@ const cancelEditing = () => {
 
 const confirmRename = () => {
   if (activeChat.value && editedChatName.value) {
-    renameChat(editedChatName.value)
+    // renameChat(editedChatName.value)
     isEditingChatName.value = false
   }
 }
 
 onMounted(() => {
   refreshModels().then(async () => {
+    if (currentModel.value && currentExtApp.value) {
+      await switchModel(currentModel.value, currentExtApp.value)
+    } else {
+      await switchModel(availableModels.value[0].deploymentId, availableModels.value[0].externalApplicationId)
+    }
     await initialize()
-    await switchModel(currentModel.value ?? availableModels.value[0].name)
   })
 })
 </script>
@@ -65,7 +70,7 @@ onMounted(() => {
           v-if="isSystemPromptOpen"
           class="mx-auto flex h-screen w-full max-w-7xl flex-col gap-4 px-4 pb-4"
         >
-          <SystemPrompt />
+          <!-- <SystemPrompt /> -->
         </div>
 
         <div
@@ -78,14 +83,14 @@ onMounted(() => {
             <div class="mr-auto flex h-full items-center" v-if="activeChat">
               <div>
                 <div v-if="isEditingChatName">
-                  <TextInput
+                  <!-- <TextInput
                     id="chat-name"
                     v-model="editedChatName"
                     ref="chatNameInput"
                     @keyup.enter="confirmRename"
                     @keyup.esc="cancelEditing"
                     @blur="cancelEditing"
-                  />
+                  /> -->
                 </div>
 
                 <button

@@ -14,20 +14,19 @@ import {
   isSystemPromptOpen,
   toggleSettingsPanel,
   toggleSystemPromptPanel,
-} from '../services/appConfig.ts'
-import { useChats } from '../services/chat.ts'
+} from '../services/appConfigAbacus.ts'
+import { useChats } from '../services/chatAbacus2.ts'
 
-const { sortedChats, activeChat, switchChat, deleteChat, startNewChat } =
-  useChats()
+const { chats, activeChat, switchChat, deleteChat, startNewChat } = useChats()
 
 const onNewChat = () => {
   checkSystemPromptPanel()
   return startNewChat('New chat')
 }
 
-const onSwitchChat = (chatId: number) => {
+const onSwitchChat = (deploymentConversationId: string) => {
   checkSystemPromptPanel()
-  return switchChat(chatId)
+  return switchChat(deploymentConversationId)
 }
 
 const checkSystemPromptPanel = () => {
@@ -56,11 +55,11 @@ const lang = navigator.language
         class="h-full space-y-4 overflow-y-auto border-b border-gray-200 px-2 py-4 dark:border-gray-800"
       >
         <button
-          v-for="chat in sortedChats"
-          @click="onSwitchChat(chat.id!)"
-          @keyup.delete="deleteChat(chat.id!)"
+          v-for="chat in chats"
+          @click="onSwitchChat(chat.deploymentConversationId!)"
+          @keyup.delete="deleteChat(chat.deploymentConversationId!)"
           :class="{
-            'bg-gray-100 dark:bg-gray-800': activeChat?.id == chat.id,
+            'bg-gray-100 dark:bg-gray-800': activeChat?.deploymentConversationId == chat.deploymentConversationId,
           }"
           class="flex w-full flex-col gap-y-1 rounded-md px-3 py-2 text-left transition-colors duration-100 ease-in-out hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-100 dark:placeholder-gray-300 dark:hover:bg-gray-700 dark:focus:ring-blue-500"
         >
@@ -68,10 +67,10 @@ const lang = navigator.language
             {{ chat.name }}
           </span>
           <span class="text-xs leading-none text-gray-700 dark:text-gray-300">
-            {{ chat.model }}
+            {{ chat.name }}
           </span>
           <span class="text-xs leading-none text-gray-700 dark:text-gray-300">
-            {{
+            <!-- {{
               chat.createdAt.toLocaleDateString(lang, {
                 day: '2-digit',
                 month: 'short',
@@ -80,7 +79,7 @@ const lang = navigator.language
                 minute: '2-digit',
                 second: '2-digit',
               })
-            }}
+            }} -->
           </span>
         </button>
       </div>

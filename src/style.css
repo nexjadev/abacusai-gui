@@ -16,3 +16,47 @@
 .slide-leave-from {
   transform: translateX(0);
 }
+
+pre code.hljs {
+  /* background-color: #1e1e1e; */
+  color: #d4d4d4;
+  padding: 1em;
+  border-radius: 0.5rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.hljs-attr {
+  color: #9cdcfe;
+}
+
+.hljs-string {
+  color: #ce9178;
+}
+
+.hljs-number,
+.hljs-literal {
+  color: #b5cea8;
+}
+
+.hljs-punctuation {
+  color: #d4d4d4;
+}
+.hljs {
+  background: none;
+}
+
+.hljs::after {
+  content: none;
+}
+
+.hljs::before {
+  content: none;
+}
+.prose :where(code):not(:where([class~="not-prose"],[class~="not-prose"] *))::before {
+  content: none;
+}
+.prose :where(code):not(:where([class~="not-prose"],[class~="not-prose"] *))::after {
+  content: none;
+}

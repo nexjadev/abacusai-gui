@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useTextareaAutosize } from '@vueuse/core'
-import { useChats } from '../services/chat.ts'
-import { showSystem } from '../services/appConfig.ts'
+import { useChats } from '../services/chatAbacus2.ts'
+import { showSystem } from '../services/appConfigAbacus.ts'
 import { IconPlayerStopFilled, IconSend, IconWhirl } from '@tabler/icons-vue'
 
 const { textarea, input: userInput } = useTextareaAutosize({ input: '' })

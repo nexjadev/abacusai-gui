@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue'
 import ChatMessage from './ChatMessage.vue'
-import { useChats } from '../services/chat.ts'
-import { showSystem } from '../services/appConfig.ts'
+import { useChats } from '../services/chatAbacus2.ts'
+import { showSystem } from '../services/appConfigAbacus.ts'
 
 const { messages } = useChats()
 const chatElement = ref<HTMLElement>()
@@ -45,7 +45,8 @@ watch(messages, () => {
 onUnmounted(() => chatElement.value?.removeEventListener('scroll', handleUserScroll))
 
 const visibleMessages = computed(() =>
-  showSystem.value ? messages?.value : messages?.value.filter((m) => m.role != 'system'),
+  // showSystem.value ? messages?.value : messages?.value.filter((m) => m.role != 'system'),
+  messages?.value
 )
 </script>
 

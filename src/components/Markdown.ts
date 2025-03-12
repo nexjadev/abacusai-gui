@@ -10,11 +10,19 @@ const Markdown: Component = defineComponent({
     },
   },
   setup(props) {
-    const md = ref<markdownit>(markdownit())
+    const md = ref<markdownit>(
+      markdownit({
+        html: true,
+        linkify: true,
+        typographer: true,
+        breaks: true,
+      })
+    )
 
     md.value.use(highlightjs, {
-      inline: true,
+      inline: false,
       auto: true,
+      code: true,
       ignoreIllegals: true,
     })
 

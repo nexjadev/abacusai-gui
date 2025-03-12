@@ -50,6 +50,7 @@ export type Conversation = {
   metadata: {
     chatllmTeamsV2: boolean;
   };
+  history?: History[];
 };
 
 export type CreateConversationRequest = Omit<Conversation, 'deploymentConversationId' | 'createdAt' | 'conversationType' | 'metadata'> & {
@@ -339,17 +340,26 @@ export const useApi = () => {
     return createdConversation.result as Conversation
   }
 
+  const abort = () => {
+    if (abortController.value) {
+      abortController.value.abort()
+      abortController.value = new AbortController()
+      signal.value = abortController.value.signal
+      console.log('Fetch request aborted and controller reset')
+    }
+  }
+
   return {
     error,
     generateChat,
-    createModel,
+    // createModel,
     listLocalModels,
-    showModelInformation,
-    copyModel,
-    deleteModel,
-    pullModel,
-    pushModel,
-    generateEmbeddings,
+    // showModelInformation,
+    // copyModel,
+    // deleteModel,
+    // pullModel,
+    // pushModel,
+    // generateEmbeddings,
     abort,
     getAllChats,
     getChat,

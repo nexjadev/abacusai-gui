@@ -3,13 +3,13 @@ import gravatarUrl from 'gravatar-url'
 import { computed } from 'vue'
 import { Config, db } from './databaseAbacus.ts'
 
-export const currentModel = useLocalStorage('currentModel', 'none')
-export const currentExtApp = useLocalStorage('currentExtApp', 'none')
+export const currentModel = useLocalStorage('currentModel', '')
+export const currentExtApp = useLocalStorage('currentExtApp', '')
 export const gravatarEmail = useLocalStorage('gravatarEmail', '')
 export const historyMessageLength = useLocalStorage('historyMessageLength', 10)
 export const avatarUrl = computed(() => gravatarEmail.value
   ? gravatarUrl(gravatarEmail.value, { size: 200, default: '/avatar.png' })
-  : null,
+  : 'User.png',
 )
 export const enableMarkdown = useLocalStorage('markdown', true)
 export const showSystem = useLocalStorage('systemMessages', true)

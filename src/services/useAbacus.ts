@@ -30,10 +30,10 @@ export const useAI = () => {
 
       if ('end' in data) {
           // Es un mensaje de análisis
-          onDone(data as StreamResponse);
+          // onDone(data as StreamResponse);
       } else {
           // Es un mensaje de texto regular
-          onMessage(data as TextMessage);
+          // onMessage(data as TextMessage);
       }
     })
   }
