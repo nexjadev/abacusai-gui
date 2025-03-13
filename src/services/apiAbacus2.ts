@@ -164,8 +164,9 @@ export type ChatResponseSegment = {
   isGeneratingImage?: boolean;
   messageId: string;
   counter: number;
-  message_id: string;
+  message_id?: string;
   ping?: boolean;
+  isRouting?: boolean;
   isCollapsed?: boolean;
   isComplexSegment?: boolean;
 }
@@ -216,7 +217,7 @@ export const useApi = () => {
         }
 
         try {
-          const chunk = new TextDecoder().decode(value)
+          const chunk = new TextDecoder('utf-8').decode(value)
           const parts = chunk.split('\n').filter(part => part.trim() !== '');
 
           for (const part of parts) {
@@ -292,13 +293,11 @@ export const useApi = () => {
   }
 
   // getChat
-  const getChat = async (deploymentId: string, deploymentConversationId: string): Promise<Conversation> => {
+  const getChat = async (deploymentConversationId: string): Promise<Conversation> => {
     const queryParams = new URLSearchParams({
-      deploymentId,
       deploymentConversationId,
       skipDocumentBoundingBoxes: "true",
       filterIntermediateConversationEvents: "true",
-      getUnusedDocumentUploads: "true",
     });
     const response = await fetch(getApiUrl('/conversations?' + queryParams.toString()), {
       method: 'GET',

@@ -3,7 +3,7 @@ import { IconRefresh } from '@tabler/icons-vue'
 import { useChats } from '../services/chatAbacus2.ts'
 import { useAI } from '../services/useAbacus.ts'
 import { ref } from 'vue'
-import { currentModel } from '../services/appConfigAbacus.ts'
+import { currentModelId } from '../services/appConfigAbacus.ts'
 
 const { activeChat, switchModel, hasMessages } = useChats()
 const { refreshModels, availableModels } = useAI()
@@ -33,7 +33,7 @@ const { disabled = false } = defineProps<Props>()
     <div class="inline-flex items-center gap-2">
       <select
         :disabled="disabled"
-        :value="activeChat?.deploymentId ?? currentModel"
+        :value="activeChat?.deploymentId ?? currentModelId"
         @change="handleModelChange"
         class="w-full cursor-pointer rounded-lg bg-white py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-100"
       >

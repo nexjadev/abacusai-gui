@@ -61,7 +61,7 @@ const handleCompositionEnd = () => {
 </script>
 
 <template>
-  <form @submit.prevent="onSubmit">
+  <form @submit.prevent="onSubmit" class="w-full max-w-7xl mx-auto">
     <div class="flex px-2 flex-col sm:flex-row items-center">
       <div class="text-gray-900 dark:text-gray-100 space-x-2 text-sm font-medium mb-2" v-if="showSystem">
         <label>

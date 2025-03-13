@@ -5,9 +5,7 @@ import ChatMessages from './components/ChatMessages.vue'
 // import SystemPrompt from './components/SystemPrompt.vue'
 import ModelSelector from './components/ModelSelector.vue'
 import {
-  currentChat,
-  currentExtApp,
-  currentModel,
+  currentModelId,
   isDarkMode,
   isSettingsOpen,
   isSystemPromptOpen,
@@ -49,10 +47,10 @@ const confirmRename = () => {
 
 onMounted(() => {
   refreshModels().then(async () => {
-    if (currentModel.value && currentExtApp.value) {
-      await switchModel(currentModel.value, currentExtApp.value)
+    if (currentModelId.value) {
+      await switchModel(currentModelId.value)
     } else {
-      await switchModel(availableModels.value[0].deploymentId, availableModels.value[0].externalApplicationId)
+      await switchModel(availableModels.value[0].deploymentId)
     }
     await initialize()
   })
@@ -76,7 +74,7 @@ onMounted(() => {
 
         <div
           v-if="!isSystemPromptOpen"
-          class="mx-auto flex h-screen w-full max-w-7xl flex-col gap-4 px-4 pb-4"
+          class="mx-auto flex h-screen w-full flex-col gap-4 px-4 pb-4"
         >
           <div
             class="flex w-full flex-row items-center justify-center gap-4 rounded-b-xl bg-gray-100 px-4 py-2 dark:bg-gray-800"

@@ -86,20 +86,20 @@ const thought = computed(() => {
 </script>
 
 <template>
-  <div class="flex rounded-xl bg-gray-100 px-2 py-6 dark:bg-gray-800 sm:px-4">
+  <div class="flex rounded-xl max-w-7xl mx-auto px-2 py-6 dark:bg-gray-800 sm:px-4">
     <img class="mr-2 flex size-10 aspect-square rounded-full border border-gray-200 bg-white object-contain sm:mr-4"
       :src="message.llmBotIcon || logo" :alt="message.llmDisplayName || 'AI'" />
 
-    <div class="flex max-w-3xl flex-col rounded-xl">
-      <div v-for="(content, index) in messageContent" :key="index">
+    <div class="flex flex-col rounded-xl">
+      <div v-for="(content, index) in message.segments" :key="index">
         <!-- Contenido colapsable -->
-        <span v-if="content.isComplexSegment" class="flex items-center gap-1">
+        <span v-if="content.type === 'collapsible_component' && !content.isCollapsed" class="font-medium !text-[12px] ml-0.5 flex items-center gap-1">
           {{ message.llmDisplayName }}
           <div class="inline-flex items-center gap-1">
             <div>{{ content.title }}</div>
           </div>
         </span>
-        <details v-else-if="content.isCollapsible"
+        <!-- <details v-if="content.type === 'collapsible_component' && content.isCollapsed"
           class="whitespace-pre-wrap rounded-md mb-4 border border-blue-200 bg-blue-50 p-4 text-sm leading-tight text-blue-900 dark:border-blue-700 dark:bg-blue-800 dark:text-blue-50"
           :open="true">
           <summary v-if="content.title">
@@ -107,18 +107,73 @@ const thought = computed(() => {
           </summary>
           <div v-if="content.isSpinny" class="animate-spin">⌛</div>
           <div v-else>
-            <Markdown :source="content.content" />
+            <Markdown :source="content.segment" />
           </div>
-        </details>
+        </details> -->
 
         <!-- Contenido normal -->
-        <div v-else class="prose prose-base max-w-full dark:prose-invert">
+        <div v-if="content.type === 'text' || content.type === 'image'" class="prose prose-base max-w-full dark:prose-invert">
           <div v-if="content.isSpinny" class="animate-spin">⌛</div>
           <div v-else>
-            <Markdown :source="content.content" />
+            <Markdown :source="content.segment" />
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+.prose {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.prose ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose li {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.prose code {
+  font-family: monospace;
+  background-color: rgba(0, 0, 0, 0.05);
+  padding: 0.1rem 0.3rem;
+  border-radius: 0.25rem;
+  font-size: 0.9em;
+}
+
+.prose pre {
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+}
+
+.dark .prose code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+details {
+  margin-bottom: 1rem;
+}
+
+details summary {
+  margin-bottom: 0.5rem;
+}
+</style>

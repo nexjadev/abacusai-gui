@@ -60,3 +60,10 @@ pre code.hljs {
 .prose :where(code):not(:where([class~="not-prose"],[class~="not-prose"] *))::after {
   content: none;
 }
+.prose-base :where(h3):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  margin-top: 0;
+}
+.prose-base :where(h4):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  margin-bottom: .5rem;
+  margin-top: 1rem;
+}

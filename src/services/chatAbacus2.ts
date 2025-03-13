@@ -1,28 +1,25 @@
 import { computed, ref } from 'vue'
-import { db } from './databaseAbacus.ts'
-import { historyMessageLength, currentModel, useConfig, currentExtApp, currentChat } from './appConfigAbacus.ts'
+import { currentModelId, useConfig, currentChatId } from './appConfigAbacus.ts'
 import { useAI } from './useAbacus.ts'
-import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, History, MessageChatRequest, useApi } from './apiAbacus2.ts'
+import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, ExternalApplication, History, MessageChatRequest, useApi } from './apiAbacus2.ts'
 
-// State
 const chats = ref<Conversation[]>([])
 const activeChat = ref<Conversation | null>(null)
+const activeModel = ref<ExternalApplication | null>(null)
 const messages = ref<History[]>([])
 const systemPrompt = ref<History>()
 const ongoingAiMessages = ref<Map<string, History>>(new Map())
 
 export function useChats() {
-  const { generate } = useAI()
+  const { generate, availableModels } = useAI()
   const { abort, getAllChats, getChat, updateNameChat, createConversation } = useApi()
 
-  // Computed
   const hasActiveChat = computed(() => activeChat.value !== null)
   const hasMessages = computed(() => messages.value.length > 0)
 
-  // Methods for state mutations
   const setActiveChat = (chat: Conversation) => {
     activeChat.value = chat
-    currentChat.value = chat.deploymentConversationId
+    currentChatId.value = chat.deploymentConversationId
     if (chat.history) {
       messages.value = chat.history
     } else {
@@ -37,14 +34,18 @@ export function useChats() {
     }
   }
 
+  const setActiveModel = (model: ExternalApplication) => {
+    activeModel.value = model
+  }
+
   const initialize = async () => {
     try {
-      chats.value = await getAllChats(currentModel.value, '30')
+      chats.value = await getAllChats(currentModelId.value, '30')
       if (chats.value.length == 0) {
         // await startNewChat('New chat')
       }
-      if (currentChat.value) {
-        await switchChat(currentChat.value)
+      if (currentChatId.value) {
+        await switchChat(currentChatId.value)
       }
     } catch (error) {
       console.error('Failed to initialize chats:', error)
@@ -53,28 +54,27 @@ export function useChats() {
 
   const switchChat = async (deploymentConversationId: string) => {
     try {
-      const chat = await getChat(currentModel.value, deploymentConversationId)
+      const chat = await getChat(deploymentConversationId)
       if (chat) {
         setActiveChat(chat)
-        // const chatMessages = await dbLayer.getMessages(chatId)
-        // setMessages(chatMessages)
         if (activeChat.value) {
-          await switchModel(activeChat.value.deploymentId, activeChat.value.externalApplicationId)
+          await switchModel(activeChat.value.deploymentId)
         }
       }
     } catch (error) {
-      console.error(`Failed to switch to chat with ID ${currentModel.value}:`, error)
+      console.error(`Failed to switch to chat with ID ${currentModelId.value}:`, error)
     }
   }
 
-  const switchModel = async (deploymentId: string, externalApplicationId: string) => {
-    currentModel.value = deploymentId
-    currentExtApp.value = externalApplicationId
+  const switchModel = async (deploymentId: string) => {
+    currentModelId.value = deploymentId
     if (!activeChat.value) return
 
     try {
-      // await dbLayer.updateChat(activeChat.value.id!, { model })
-      // activeChat.value.model = model
+      const model = availableModels.value.find(model => model.deploymentId === deploymentId)
+      if (model) {
+        setActiveModel(model)
+      }
     } catch (error) {
       console.error(`Failed to switch model to ${deploymentId}:`, error)
     }
@@ -86,23 +86,20 @@ export function useChats() {
     activeChat.value.name = newName
     // await dbLayer.updateChat(activeChat.value.id!, { name: newName })
     // chats.value = await dbLayer.getAllChats()
-    await updateNameChat(currentModel.value, deploymentConversationId, newName)
-    chats.value = await getAllChats(currentModel.value, '30')
+    await updateNameChat(currentModelId.value, deploymentConversationId, newName)
+    chats.value = await getAllChats(currentModelId.value, '30')
   }
 
   const startNewChat = async (name: string) => {
     const newChat: CreateConversationRequest = {
-      externalApplicationId: currentExtApp.value,
+      externalApplicationId: activeModel.value?.externalApplicationId || '',
       name: name,
-      deploymentId: currentModel.value,
+      deploymentId: currentModelId.value,
     }
 
     try {
-      // newChat.id = await dbLayer.addChat(newChat)
-      // chats.value.push(newChat)
       const newConversation = await createConversation(newChat)
       setActiveChat(newConversation)
-      // setMessages([])
       await addSystemMessage(await useConfig().getCurrentSystemMessage())
     } catch (error) {
       console.error('Failed to start a new chat:', error)
@@ -143,7 +140,7 @@ export function useChats() {
         timezone: "America/Lima",
         language: "es-419"
       },
-      externalApplicationId: currentExtApp.value,
+      externalApplicationId: activeModel.value?.externalApplicationId || '' ,
     }
 
     try {
@@ -193,9 +190,7 @@ export function useChats() {
   }
 
   const handleAiPartialResponse = (data: ChatResponseSegment, currentChatId: string) => {
-    ongoingAiMessages.value.has(currentChatId)
-      ? appendToAiMessage(data, currentChatId)
-      : startAiMessage(data, currentChatId)
+    ongoingAiMessages.value.has(currentChatId) ? appendToAiMessage(data, currentChatId) : startAiMessage(data, currentChatId)
   }
 
   const handleAiCompletion = async (data: ChatFinalResponse, currentChatId: string) => {
@@ -252,23 +247,51 @@ export function useChats() {
     const message: History = {
       regenerateAttempt: 0,
       inputParams: {
-          llmName: "",
-          forceRoutingType: null
+        llmName: "",
+        forceRoutingType: null
       },
       segments: [],
-      llmDisplayName: "",
+      llmDisplayName: activeModel.value?.name || "",
       llmBotIcon: "",
       routedLlm: "",
       role: "BOT",
       timestamp: new Date().toISOString(),
-      messageIndex: 1,
+      messageIndex: messages.value.length + 1,
       text: "",
       modelVersion: "",
     }
+    const collapsibleComponent: ChatResponseSegment = {
+      type: "collapsible_component",
+      title: "",
+      counter: 0,
+      segment: {
+        temp: false,
+        type: "text",
+        title: null,
+        segment: "",
+        isSpinny: false,
+        messageId: null,
+        isGeneratingImage: false
+      },
+      isSpinny: true,
+      isRouting: false,
+      messageId: "",
+      isCollapsed: false,
+      isComplexSegment: true
+    }
+    message.segments.push(collapsibleComponent)
+    const textSegment: ChatResponseSegment = {
+      type: "text",
+      segment: "",
+      messageId: "",
+      counter: 0,
+    }
+    message.segments.push(textSegment)
 
     try {
       ongoingAiMessages.value.set(currentChatId, message)
       messages.value.push(message)
+      appendToAiMessage(data, currentChatId)
       // console.log('startAiMessage -> messages -> ', messages.value)
     } catch (error) {
       console.error('Failed to start AI message:', error)
@@ -278,26 +301,19 @@ export function useChats() {
   const appendToAiMessage = async (data: ChatResponseSegment, currentChatId: string) => {
     const aiMessage = ongoingAiMessages.value.get(currentChatId)
     if (aiMessage) {
-      // aiMessage.text += data.text
-      aiMessage.segments.push(data)
-      // Verificar si existe un segmento de tipo collapsible_component
-      const hasCollapsible = aiMessage.segments.some(segment => segment.type === 'collapsible_component')
-      if (!hasCollapsible) {
-        aiMessage.segments.push(data)
+      const collapsibleSegment = aiMessage.segments.find(segment => segment.type === 'collapsible_component')
+      if (collapsibleSegment?.type === data.type) {
+        Object.assign(collapsibleSegment, data)
       }
 
-      // Buscar segmento de tipo text
       const textSegment = aiMessage.segments.find(segment => segment.type === 'text')
-
-      if (!textSegment) {
-        // Si no existe segmento text, agregar data como nuevo segmento
-        aiMessage.segments.push(data)
-      } else {
-        // Si existe segmento text, concatenar el segment de data
-        if (typeof textSegment.segment === 'string' && typeof data.segment === 'string') {
-          textSegment.segment += data.segment
-        }
+      if (textSegment?.type === data.type) {
+        textSegment.segment += data.segment
+        textSegment.messageId = data.messageId
+        textSegment.counter = data.counter
       }
+
+      console.log('appendToAiMessage -> aiMessage -> ', aiMessage)
       try {
         // Only "load the messages" if we are on this chat atm.
         // if (chatId == activeChat.value?.id) {

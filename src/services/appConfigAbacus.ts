@@ -3,9 +3,8 @@ import gravatarUrl from 'gravatar-url'
 import { computed } from 'vue'
 import { Config, db } from './databaseAbacus.ts'
 
-export const currentModel = useLocalStorage('currentModel', '')
-export const currentExtApp = useLocalStorage('currentExtApp', '')
-export const currentChat = useLocalStorage('currentChat', '')
+export const currentModelId = useLocalStorage('currentModelId', '')
+export const currentChatId = useLocalStorage('currentChatId', '')
 export const gravatarEmail = useLocalStorage('gravatarEmail', '')
 export const historyMessageLength = useLocalStorage('historyMessageLength', 10)
 export const avatarUrl = computed(() => gravatarEmail.value
@@ -52,7 +51,7 @@ export function useConfig() {
   }
 
   const getCurrentSystemMessage = async () => {
-    let config = await configDbLayer.getCurrentConfig(currentModel.value)
+    let config = await configDbLayer.getCurrentConfig(currentModelId.value)
     return config?.systemPrompt ?? null
   }
 
