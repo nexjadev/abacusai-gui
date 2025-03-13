@@ -44,9 +44,9 @@ watch(messages, () => {
 
 onUnmounted(() => chatElement.value?.removeEventListener('scroll', handleUserScroll))
 
-const visibleMessages = computed(() =>
-  // showSystem.value ? messages?.value : messages?.value.filter((m) => m.role != 'system'),
-  messages?.value
+const visibleMessages = computed(() => {
+    return messages?.value
+  }
 )
 </script>
 

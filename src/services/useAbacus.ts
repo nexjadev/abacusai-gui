@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { ExternalApplication, MessageChatRequest, StreamMessage, StreamResponse, TextMessage, useApi } from './apiAbacus2'
+import { ChatFinalResponse, ChatResponseSegment, ExternalApplication, MessageChatRequest, StreamMessage, useApi } from './apiAbacus2'
 import { currentModel } from './appConfigAbacus'
 import { History, SSEChatPartResponse, SSESegment } from './apiAbacus2'
 
@@ -10,32 +10,27 @@ export const useAI = () => {
 
   const generate = async (
     message: MessageChatRequest,
-    onMessage?: (data: TextMessage) => void,
-    onDone?: (data: StreamResponse) => void,
+    onMessage?: (data: ChatResponseSegment) => void,
+    onDone?: (data: ChatFinalResponse) => void,
   ) => {
-    // let chatHistory = messages.slice(-(historyMessageLength ?? 0))
-    // if (system) {
-    //   chatHistory.unshift(system)
-    // }
-     await generateChat(message, (data: StreamMessage) => {
-      // if (!data.done && onMessage) {
-      //   onMessage(data as SSEChatPartResponse)
-      // } else if (data.done && onDone) {
-      //   onDone(data as SSESegment)
-      // }
+    await generateChat(message, (data: StreamMessage) => {
       if ('ping' in data) {
-        // Es un mensaje de ping
-          return;
+        // Ignorar mensajes de ping
+        return;
       }
 
       if ('end' in data) {
-          // Es un mensaje de análisis
-          // onDone(data as StreamResponse);
+        // Es un mensaje de finalización
+        if (onDone) {
+          onDone(data as ChatFinalResponse);
+        }
       } else {
-          // Es un mensaje de texto regular
-          // onMessage(data as TextMessage);
+        // Es un mensaje de texto regular
+        if (onMessage) {
+          onMessage(data as ChatResponseSegment);
+        }
       }
-    })
+    });
   }
 
   const refreshModels = async () => {

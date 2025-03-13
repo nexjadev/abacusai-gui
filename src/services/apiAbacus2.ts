@@ -116,7 +116,7 @@ export type History = {
   messageIndex: number;
   text: string;
   modelVersion: string;
-  segments: Segment[];
+  segments: ChatResponseSegment[];
   searchResults?: SearchResults;
   streamedData?: string;
   streamedSectionData?: any[];
@@ -154,36 +154,32 @@ interface BaseStreamMessage {
   message_id?: string;
 }
 
-// Para mensajes de ping
-interface PingMessage extends BaseStreamMessage {
-  ping: boolean;
+// Tipo para los segmentos de respuesta
+export type ChatResponseSegment = {
+  type: string;
+  temp?: boolean;
+  isSpinny?: boolean;
+  segment?: string | any;
+  title?: string;
+  isGeneratingImage?: boolean;
+  messageId: string;
+  counter: number;
+  message_id: string;
+  ping?: boolean;
+  isCollapsed?: boolean;
+  isComplexSegment?: boolean;
 }
 
-// Para mensajes de texto
-export interface TextMessage extends BaseStreamMessage {
-  type: "text";
-  segment: string;
-}
-
-// Para mensajes de análisis
-interface AnalysisMessage extends BaseStreamMessage {
-  type: "text";
-  temp: boolean;
-  isSpinny: boolean;
-  segment: string;
-  title: string;
-  isGeneratingImage: boolean;
-}
-
-export interface StreamResponse {
-  success: boolean;
+// Tipo para la respuesta final
+export type ChatFinalResponse = {
+  token: null;
   end: boolean;
-  token: null | string;
+  success: boolean;
   counter: number;
 }
 
 // Tipo unión para manejar cualquier tipo de mensaje
-export type StreamMessage = StreamResponse | PingMessage | TextMessage | AnalysisMessage;
+export type StreamMessage = ChatResponseSegment | ChatFinalResponse;
 
 // Define a method to get the full API URL for a given path
 const getApiUrl = (path: string) =>
@@ -221,12 +217,20 @@ export const useApi = () => {
 
         try {
           const chunk = new TextDecoder().decode(value)
-          const parsedChunk: StreamMessage = JSON.parse(chunk)
+          const parts = chunk.split('\n').filter(part => part.trim() !== '');
 
-          onDataReceived(parsedChunk)
-          results.push(parsedChunk)
+          for (const part of parts) {
+            try {
+              const parsedChunk: StreamMessage = JSON.parse(part);
+              onDataReceived(parsedChunk);
+              results.push(parsedChunk);
+            } catch (e) {
+              console.log('Error al parsear parte del chunk -> ', e, 'parte -> ', part);
+            }
+          }
         } catch (e) {
           // Carry on...
+          console.log('generateChat -> error -> ', e)
         }
       }
     }

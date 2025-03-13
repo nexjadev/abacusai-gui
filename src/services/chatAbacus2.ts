@@ -1,15 +1,15 @@
 import { computed, ref } from 'vue'
 import { db } from './databaseAbacus.ts'
-import { historyMessageLength, currentModel, useConfig, currentExtApp } from './appConfigAbacus.ts'
+import { historyMessageLength, currentModel, useConfig, currentExtApp, currentChat } from './appConfigAbacus.ts'
 import { useAI } from './useAbacus.ts'
-import { Conversation, CreateConversationRequest, History, MessageChatRequest, useApi } from './apiAbacus2.ts'
+import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, History, MessageChatRequest, useApi } from './apiAbacus2.ts'
 
 // State
 const chats = ref<Conversation[]>([])
 const activeChat = ref<Conversation | null>(null)
 const messages = ref<History[]>([])
 const systemPrompt = ref<History>()
-const ongoingAiMessages = ref<Map<number, History>>(new Map())
+const ongoingAiMessages = ref<Map<string, History>>(new Map())
 
 export function useChats() {
   const { generate } = useAI()
@@ -22,6 +22,7 @@ export function useChats() {
   // Methods for state mutations
   const setActiveChat = (chat: Conversation) => {
     activeChat.value = chat
+    currentChat.value = chat.deploymentConversationId
     if (chat.history) {
       messages.value = chat.history
     } else {
@@ -41,6 +42,9 @@ export function useChats() {
       chats.value = await getAllChats(currentModel.value, '30')
       if (chats.value.length == 0) {
         // await startNewChat('New chat')
+      }
+      if (currentChat.value) {
+        await switchChat(currentChat.value)
       }
     } catch (error) {
       console.error('Failed to initialize chats:', error)
@@ -131,30 +135,23 @@ export function useChats() {
 
     const currentChatId = activeChat.value.deploymentConversationId!
     const message: MessageChatRequest = {
-      // chatId: activeChat.value.id!,
-      // role: 'user',
-      // content,
-      // createdAt: new Date(),
-      requestId: '',
+      requestId: crypto.randomUUID(),
       deploymentConversationId: currentChatId,
       message: content,
       isDesktop: true,
       chatConfig: {
-        timezone: 'America/New_York',
-        language: 'en',
+        timezone: "America/Lima",
+        language: "es-419"
       },
       externalApplicationId: currentExtApp.value,
     }
 
     try {
-      // message.id = await dbLayer.addMessage(message)
-      // messages.value.push(message)
-
-      // await generate(
-      //   message,
-      //   (data) => handleAiPartialResponse(data, currentChatId),
-      //   (data) => handleAiCompletion(data, currentChatId),
-      // )
+      await generate(
+        message,
+        (data: ChatResponseSegment) => handleAiPartialResponse(data, currentChatId),
+        (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId)
+      );
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -195,25 +192,25 @@ export function useChats() {
     // }
   }
 
-  // const handleAiPartialResponse = (data: ChatPartResponse, chatId: number) => {
-  //   ongoingAiMessages.value.has(chatId)
-  //     ? appendToAiMessage(data.message.content, chatId)
-  //     : startAiMessage(data.message.content, chatId)
-  // }
+  const handleAiPartialResponse = (data: ChatResponseSegment, currentChatId: string) => {
+    ongoingAiMessages.value.has(currentChatId)
+      ? appendToAiMessage(data, currentChatId)
+      : startAiMessage(data, currentChatId)
+  }
 
-  // const handleAiCompletion = async (data: ChatCompletedResponse, chatId: number) => {
-  //   const aiMessage = ongoingAiMessages.value.get(chatId)
-  //   if (aiMessage) {
-  //     try {
-  //       ongoingAiMessages.value.delete(chatId)
-  //     } catch (error) {
-  //       console.error('Failed to finalize AI message:', error)
-  //     }
-  //   } else {
-  //     console.error('no ongoing message to finalize:')
-  //     debugger
-  //   }
-  // }
+  const handleAiCompletion = async (data: ChatFinalResponse, currentChatId: string) => {
+    const aiMessage = ongoingAiMessages.value.get(currentChatId)
+    if (aiMessage) {
+      try {
+        ongoingAiMessages.value.delete(currentChatId)
+      } catch (error) {
+        console.error('Failed to finalize AI message:', error)
+      }
+    } else {
+      console.error('no ongoing message to finalize:')
+      debugger
+    }
+  }
 
   const wipeDatabase = async () => {
     try {
@@ -247,44 +244,73 @@ export function useChats() {
       //   }
       // }
     } catch (error) {
-      console.error(`Failed to delete chat with ID ${chatId}:`, error)
+      console.error(`Failed to delete chat with ID ${deploymentConversationId}:`, error)
     }
   }
 
-  const startAiMessage = async (initialContent: string, chatId: number) => {
-    // const message: History = {
-    //   chatId: chatId,
-    //   role: 'assistant',
-    //   content: initialContent,
-    //   createdAt: new Date(),
-    // }
+  const startAiMessage = async (data: ChatResponseSegment, currentChatId: string) => {
+    const message: History = {
+      regenerateAttempt: 0,
+      inputParams: {
+          llmName: "",
+          forceRoutingType: null
+      },
+      segments: [],
+      llmDisplayName: "",
+      llmBotIcon: "",
+      routedLlm: "",
+      role: "BOT",
+      timestamp: new Date().toISOString(),
+      messageIndex: 1,
+      text: "",
+      modelVersion: "",
+    }
 
     try {
-      // message.id = await dbLayer.addMessage(message)
-      // ongoingAiMessages.value.set(chatId, message)
-      // messages.value.push(message)
+      ongoingAiMessages.value.set(currentChatId, message)
+      messages.value.push(message)
+      // console.log('startAiMessage -> messages -> ', messages.value)
     } catch (error) {
       console.error('Failed to start AI message:', error)
     }
   }
 
-  const appendToAiMessage = async (content: string, chatId: number) => {
-    // const aiMessage = ongoingAiMessages.value.get(chatId)
-    // if (aiMessage) {
-    //   aiMessage.content += content
-    //   try {
-    //     await dbLayer.updateMessage(aiMessage.id!, { content: aiMessage.content })
+  const appendToAiMessage = async (data: ChatResponseSegment, currentChatId: string) => {
+    const aiMessage = ongoingAiMessages.value.get(currentChatId)
+    if (aiMessage) {
+      // aiMessage.text += data.text
+      aiMessage.segments.push(data)
+      // Verificar si existe un segmento de tipo collapsible_component
+      const hasCollapsible = aiMessage.segments.some(segment => segment.type === 'collapsible_component')
+      if (!hasCollapsible) {
+        aiMessage.segments.push(data)
+      }
 
-    //     // Only "load the messages" if we are on this chat atm.
-    //     if (chatId == activeChat.value?.id) {
-    //       setMessages(await dbLayer.getMessages(chatId))
-    //     }
-    //   } catch (error) {
-    //     console.error('Failed to append to AI message:', error)
-    //   }
-    // } else {
-    //   console.log('No ongoing AI message?')
-    // }
+      // Buscar segmento de tipo text
+      const textSegment = aiMessage.segments.find(segment => segment.type === 'text')
+
+      if (!textSegment) {
+        // Si no existe segmento text, agregar data como nuevo segmento
+        aiMessage.segments.push(data)
+      } else {
+        // Si existe segmento text, concatenar el segment de data
+        if (typeof textSegment.segment === 'string' && typeof data.segment === 'string') {
+          textSegment.segment += data.segment
+        }
+      }
+      try {
+        // Only "load the messages" if we are on this chat atm.
+        // if (chatId == activeChat.value?.id) {
+        //   setMessages(await dbLayer.getMessages(chatId))
+        // }
+        // console.log('appendToAiMessage -> messages -> ', messages.value)
+        // console.log('appendToAiMessage -> aiMessage -> ', aiMessage)
+      } catch (error) {
+        console.error('Failed to append to AI message:', error)
+      }
+    } else {
+      console.log('No ongoing AI message?')
+    }
   }
 
   return {

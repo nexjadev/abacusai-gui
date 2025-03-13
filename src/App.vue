@@ -5,6 +5,7 @@ import ChatMessages from './components/ChatMessages.vue'
 // import SystemPrompt from './components/SystemPrompt.vue'
 import ModelSelector from './components/ModelSelector.vue'
 import {
+  currentChat,
   currentExtApp,
   currentModel,
   isDarkMode,
