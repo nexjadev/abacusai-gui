@@ -59,6 +59,14 @@ export type CreateConversationRequest = Omit<Conversation, 'deploymentConversati
   externalApplicationId: string;
 };
 
+export type TitleConversationRequest = {
+  deploymentConversationId: string;
+  userMessage: string;
+}
+
+export type TitleConversationResponse = {
+  title: string;
+}
 
 type InputParams = {
   llmName: string | null;
@@ -343,6 +351,22 @@ export const useApi = () => {
     return createdConversation.result as Conversation
   }
 
+  // titleConversation
+  const titleConversation = async (request: TitleConversationRequest): Promise<TitleConversationResponse> => {
+    const response = await fetch(getApiUrl('/conversations/title'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    })
+    const titleConversation: AbacusResponse<TitleConversationResponse> = await response.json()
+    if (!titleConversation.success) {
+      throw new Error(titleConversation.error)
+    }
+    return titleConversation.result as TitleConversationResponse
+  }
+
   const abort = () => {
     if (abortController.value) {
       abortController.value.abort()
@@ -368,5 +392,6 @@ export const useApi = () => {
     getChat,
     updateNameChat,
     createConversation,
+    titleConversation,
   }
 }

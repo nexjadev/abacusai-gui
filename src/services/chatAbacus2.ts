@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { currentModelId, useConfig, currentChatId } from './appConfigAbacus.ts'
 import { useAI } from './useAbacus.ts'
-import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, ExternalApplication, History, MessageChatRequest, useApi } from './apiAbacus2.ts'
+import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, ExternalApplication, History, MessageChatRequest, TitleConversationRequest, useApi } from './apiAbacus2.ts'
 
 const chats = ref<Conversation[]>([])
 const activeChat = ref<Conversation | null>(null)
@@ -9,10 +9,11 @@ const activeModel = ref<ExternalApplication | null>(null)
 const messages = ref<History[]>([])
 const systemPrompt = ref<History>()
 const ongoingAiMessages = ref<Map<string, History>>(new Map())
+const TITLE_CONVERSATION = 'New Chat'
 
 export function useChats() {
   const { generate, availableModels } = useAI()
-  const { abort, getAllChats, getChat, updateNameChat, createConversation } = useApi()
+  const { abort, getAllChats, getChat, updateNameChat, createConversation, titleConversation } = useApi()
 
   const hasActiveChat = computed(() => activeChat.value !== null)
   const hasMessages = computed(() => messages.value.length > 0)
@@ -90,7 +91,7 @@ export function useChats() {
     chats.value = await getAllChats(currentModelId.value, '30')
   }
 
-  const startNewChat = async (name: string) => {
+  const startNewChat = async (name: string = TITLE_CONVERSATION) => {
     const newChat: CreateConversationRequest = {
       externalApplicationId: activeModel.value?.externalApplicationId || '',
       name: name,
@@ -149,6 +150,8 @@ export function useChats() {
         (data: ChatResponseSegment) => handleAiPartialResponse(data, currentChatId),
         (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId)
       );
+      await updateChatTitle(currentChatId, content);
+      await initialize();
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -207,6 +210,17 @@ export function useChats() {
     }
   }
 
+  async function updateChatTitle(deploymentConversationId: string, userMessage: string) {
+    if (activeChat.value?.name === TITLE_CONVERSATION) {
+      const request: TitleConversationRequest = {
+        deploymentConversationId: deploymentConversationId,
+        userMessage: userMessage,
+      }
+      const response = await titleConversation(request)
+      activeChat.value.name = response.title
+    }
+  }
+
   const wipeDatabase = async () => {
     try {
       // await dbLayer.clearChats()
@@ -218,7 +232,7 @@ export function useChats() {
       // messages.value = []
       // ongoingAiMessages.value.clear()
 
-      await startNewChat('New chat')
+      await startNewChat()
     } catch (error) {
       console.error('Failed to wipe the database:', error)
     }

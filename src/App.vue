@@ -18,7 +18,7 @@ import { useChats } from './services/chatAbacus2.ts'
 // import Settings from './components/Settings.vue'
 
 const { refreshModels, availableModels } = useAI()
-const { activeChat, renameChat, switchModel, initialize } = useChats()
+const { activeChat, renameChat, switchModel, initialize, startNewChat } = useChats()
 const isEditingChatName = ref(false)
 const editedChatName = ref('')
 const chatNameInput = ref()
@@ -49,7 +49,7 @@ const confirmRename = () => {
 
 const onNewChat = () => {
   checkSystemPromptPanel()
-  return startNewChat('New chat')
+  return startNewChat()
 }
 
 const checkSystemPromptPanel = () => {
@@ -66,10 +66,6 @@ onMounted(() => {
     await initialize()
   })
 })
-
-function startNewChat(arg0: string) {
-  throw new Error('Function not implemented.')
-}
 </script>
 
 <template>
