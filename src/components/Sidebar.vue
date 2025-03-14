@@ -8,6 +8,8 @@ import {
   IconUserCircle,
   IconMessageCode,
   IconPencil,
+  IconCheck,
+  IconX,
 } from '@tabler/icons-vue'
 
 import {
@@ -18,7 +20,7 @@ import {
 } from '../services/appConfigAbacus.ts'
 import { useChats } from '../services/chatAbacus2.ts'
 import { Conversation } from '../services/apiAbacus2.ts'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 // Definir tipos para los elementos de la lista plana
 type HeaderItem = {
@@ -33,11 +35,14 @@ type ChatItem = {
 
 type FlattenedItem = HeaderItem | ChatItem
 
-const { chats, activeChat, switchChat, deleteChat, startNewChat } = useChats()
+const { chats, activeChat, switchChat, deleteChat, startNewChat, renameChat } = useChats()
+
+const editingChatId = ref<string | null>(null)
+const newChatName = ref('')
 
 const onNewChat = () => {
   checkSystemPromptPanel()
-  return startNewChat('New chat')
+  return startNewChat()
 }
 
 const onSwitchChat = (deploymentConversationId: string) => {
@@ -153,11 +158,23 @@ const flattenedChatList = computed<FlattenedItem[]>(() => {
   return result
 })
 
-// Función para editar el nombre del chat
-const editChat = (chat: Conversation) => {
-  // Implementar lógica de edición
-  console.log('Editar chat:', chat.name)
+const startEditing = (chatId: string, currentName: string) => {
+  editingChatId.value = chatId
+  newChatName.value = currentName
 }
+
+const confirmRename = (chatId: string) => {
+  if (newChatName.value.trim()) {
+    renameChat(chatId, newChatName.value.trim())
+  }
+  cancelEditing()
+}
+
+const cancelEditing = () => {
+  editingChatId.value = null
+  newChatName.value = ''
+}
+
 </script>
 
 <template>
@@ -200,14 +217,39 @@ const editChat = (chat: Conversation) => {
               }"
               class="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
             >
-              <span class="text-sm text-gray-900 dark:text-gray-100">{{ (item as ChatItem).chat.name }}</span>
+              <span v-if="editingChatId !== (item as ChatItem).chat.deploymentConversationId" class="text-sm text-gray-900 dark:text-gray-100">{{ (item as ChatItem).chat.name }}</span>
               <div v-if="activeChat?.deploymentConversationId === (item as ChatItem).chat.deploymentConversationId" class="flex items-center space-x-1">
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="editChat((item as ChatItem).chat)">
-                  <IconPencil class="h-4 w-4" />
-                </button>
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="deleteChat((item as ChatItem).chat.deploymentConversationId!)">
-                  <IconTrashX class="h-4 w-4" />
-                </button>
+                <div v-if="editingChatId === (item as ChatItem).chat.deploymentConversationId" class="flex items-center space-x-1">
+                  <input
+                    v-model="newChatName"
+                    type="text"
+                    class="w-full rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    @keyup.enter="confirmRename((item as ChatItem).chat.deploymentConversationId!)"
+                    @keyup.esc="cancelEditing()"
+                    ref="editInput"
+                    autofocus
+                  />
+                  <button
+                    class="text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
+                    @click.stop="confirmRename((item as ChatItem).chat.deploymentConversationId!)"
+                  >
+                    <IconCheck class="h-4 w-4" />
+                  </button>
+                  <button
+                    class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    @click.stop="cancelEditing()"
+                  >
+                    <IconX class="h-4 w-4" />
+                  </button>
+                </div>
+                <template v-else>
+                  <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="startEditing((item as ChatItem).chat.deploymentConversationId!, (item as ChatItem).chat.name)">
+                    <IconPencil class="h-4 w-4" />
+                  </button>
+                  <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="deleteChat((item as ChatItem).chat.deploymentId!, (item as ChatItem).chat.deploymentConversationId!)">
+                    <IconTrashX class="h-4 w-4" />
+                  </button>
+                </template>
               </div>
             </div>
           </template>

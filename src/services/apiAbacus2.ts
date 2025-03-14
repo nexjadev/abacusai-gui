@@ -64,6 +64,17 @@ export type TitleConversationRequest = {
   userMessage: string;
 }
 
+export type DeleteConversationRequest = {
+  deploymentId: string;
+  deploymentConversationId: string;
+}
+
+export type RenameConversationRequest = {
+  deploymentId: string;
+  deploymentConversationId: string;
+  name: string;
+}
+
 export type TitleConversationResponse = {
   title: string;
 }
@@ -307,7 +318,7 @@ export const useApi = () => {
       skipDocumentBoundingBoxes: "true",
       filterIntermediateConversationEvents: "true",
     });
-    const response = await fetch(getApiUrl('/conversations?' + queryParams.toString()), {
+    const response = await fetch(getApiUrl('/conversations/one?' + queryParams.toString()), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -320,21 +331,6 @@ export const useApi = () => {
     return chat.result as Conversation
   }
 
-  // updateNameChat
-  const updateNameChat = async (deploymentId: string, deploymentConversationId: string, newName: string): Promise<void> => {
-    const response = await fetch(getApiUrl(`/conversations/update-name`), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ deploymentId, deploymentConversationId, name: newName }),
-    })
-    const updatedChat: AbacusResponse<null> = await response.json()
-    if (!updatedChat.success) {
-      throw new Error(updatedChat.error)
-    }
-  }
-
   // createConversation
   const createConversation = async (request: CreateConversationRequest): Promise<Conversation> => {
     const response = await fetch(getApiUrl('/conversations'), {
@@ -344,11 +340,11 @@ export const useApi = () => {
       },
       body: JSON.stringify(request),
     })
-    const createdConversation: AbacusResponse<Conversation> = await response.json()
-    if (!createdConversation.success) {
-      throw new Error(createdConversation.error)
+    const response_request: AbacusResponse<Conversation> = await response.json()
+    if (!response_request.success) {
+      throw new Error(response_request.error)
     }
-    return createdConversation.result as Conversation
+    return response_request.result as Conversation
   }
 
   // titleConversation
@@ -360,11 +356,41 @@ export const useApi = () => {
       },
       body: JSON.stringify(request),
     })
-    const titleConversation: AbacusResponse<TitleConversationResponse> = await response.json()
-    if (!titleConversation.success) {
-      throw new Error(titleConversation.error)
+    const response_request: AbacusResponse<TitleConversationResponse> = await response.json()
+    if (!response_request.success) {
+      throw new Error(response_request.error)
     }
-    return titleConversation.result as TitleConversationResponse
+    return response_request.result as TitleConversationResponse
+  }
+
+  // Delete a Conversation
+  const deleteConversation = async (request: DeleteConversationRequest): Promise<void> => {
+    const response = await fetch(getApiUrl('/conversations/delete'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    })
+    const response_request: AbacusResponse<null> = await response.json()
+    if (!response_request.success) {
+      throw new Error(response_request.error)
+    }
+  }
+
+  // Rename a Conversation
+  const renameConversation = async (request: RenameConversationRequest): Promise<void> => {
+    const response = await fetch(getApiUrl('/conversations/rename'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    })
+    const response_request: AbacusResponse<null> = await response.json()
+    if (!response_request.success) {
+      throw new Error(response_request.error)
+    }
   }
 
   const abort = () => {
@@ -390,8 +416,9 @@ export const useApi = () => {
     abort,
     getAllChats,
     getChat,
-    updateNameChat,
     createConversation,
     titleConversation,
+    deleteConversation,
+    renameConversation,
   }
 }

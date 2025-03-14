@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { currentModelId, useConfig, currentChatId } from './appConfigAbacus.ts'
 import { useAI } from './useAbacus.ts'
-import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, ExternalApplication, History, MessageChatRequest, TitleConversationRequest, useApi } from './apiAbacus2.ts'
+import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, DeleteConversationRequest, ExternalApplication, History, MessageChatRequest, RenameConversationRequest, TitleConversationRequest, useApi } from './apiAbacus2.ts'
 
 const chats = ref<Conversation[]>([])
 const activeChat = ref<Conversation | null>(null)
@@ -13,7 +13,7 @@ const TITLE_CONVERSATION = 'New Chat'
 
 export function useChats() {
   const { generate, availableModels } = useAI()
-  const { abort, getAllChats, getChat, updateNameChat, createConversation, titleConversation } = useApi()
+  const { abort, getAllChats, getChat, createConversation, titleConversation, deleteConversation, renameConversation } = useApi()
 
   const hasActiveChat = computed(() => activeChat.value !== null)
   const hasMessages = computed(() => messages.value.length > 0)
@@ -41,15 +41,23 @@ export function useChats() {
 
   const initialize = async () => {
     try {
-      chats.value = await getAllChats(currentModelId.value, '30')
+      await getChats()
       if (chats.value.length == 0) {
-        // await startNewChat('New chat')
+        await startNewChat()
       }
       if (currentChatId.value) {
         await switchChat(currentChatId.value)
       }
     } catch (error) {
       console.error('Failed to initialize chats:', error)
+    }
+  }
+
+  const getChats = async () => {
+    try {
+      chats.value = await getAllChats(currentModelId.value, '30')
+    } catch (error) {
+      console.error('Failed to get chats:', error)
     }
   }
 
@@ -85,10 +93,13 @@ export function useChats() {
     if (!activeChat.value) return
 
     activeChat.value.name = newName
-    // await dbLayer.updateChat(activeChat.value.id!, { name: newName })
-    // chats.value = await dbLayer.getAllChats()
-    await updateNameChat(currentModelId.value, deploymentConversationId, newName)
-    chats.value = await getAllChats(currentModelId.value, '30')
+    const request: RenameConversationRequest = {
+      deploymentId: currentModelId.value,
+      deploymentConversationId: deploymentConversationId,
+      name: newName,
+    }
+    await renameConversation(request)
+    await getChats()
   }
 
   const startNewChat = async (name: string = TITLE_CONVERSATION) => {
@@ -151,7 +162,7 @@ export function useChats() {
         (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId)
       );
       await updateChatTitle(currentChatId, content);
-      await initialize();
+      await getChats();
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -238,20 +249,30 @@ export function useChats() {
     }
   }
 
-  const deleteChat = async (deploymentConversationId: string) => {
+  const deleteChat = async (deploymentId: string,deploymentConversationId: string) => {
     try {
-      // await dbLayer.deleteChat(chatId)
-      // await dbLayer.deleteMessagesOfChat(chatId)
+      const request: DeleteConversationRequest = {
+        deploymentId: deploymentId,
+        deploymentConversationId: deploymentConversationId,
+      }
+      await deleteConversation(request)
 
-      // chats.value = chats.value.filter((chat) => chat.id !== chatId)
+      // Encontrar el índice del chat a eliminar
+      const chatIndex = chats.value.findIndex(chat => chat.deploymentConversationId === deploymentConversationId)
+      if (chatIndex !== -1) {
+        // Remover el chat de la lista
+        chats.value.splice(chatIndex, 1)
+      }
 
-      // if (activeChat.value?.id === chatId) {
-      //   if (sortedChats.value.length) {
-      //     await switchChat(sortedChats.value[0].id!)
-      //   } else {
-      //     await startNewChat('New chat')
-      //   }
-      // }
+      if (activeChat.value?.deploymentConversationId === deploymentConversationId) {
+        if (chats.value.length > 0) {
+          await switchChat(chats.value[0].deploymentConversationId!)
+        } else {
+          await startNewChat()
+        }
+      }
+
+      // await initialize()
     } catch (error) {
       console.error(`Failed to delete chat with ID ${deploymentConversationId}:`, error)
     }
