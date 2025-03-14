@@ -12,7 +12,7 @@ const { message } = defineProps<Props>()
 </script>
 
 <template>
-  <div class="flex justify-end max-w-7xl mx-auto">
+  <div class="flex justify-end max-w-6xl mx-auto">
     <div class="rounded-xl bg-gray-100 my-2 px-2 py-4 sm:px-4 flex flex-row">
       <div class="flex items-center justify-center max-w-3xl">
         <code v-if="!enableMarkdown" class="whitespace-pre-line text-gray-900 dark:text-gray-100">

@@ -87,7 +87,7 @@ const editChat = (chat: Conversation) => {
 </script>
 
 <template>
-  <aside class="flex">
+  <aside class="sidebar-container">
     <div
       class="flex h-screen w-60 flex-col overflow-y-auto border-r border-gray-200 bg-white pt-2 dark:border-gray-800 dark:bg-gray-900 sm:h-screen sm:w-64"
     >
@@ -279,3 +279,12 @@ const editChat = (chat: Conversation) => {
     </div>
   </aside>
 </template>
+
+<style scoped>
+.sidebar-container {
+  position: relative;
+  height: 100vh;
+  z-index: 10;
+  will-change: transform;
+}
+</style>

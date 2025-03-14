@@ -86,7 +86,7 @@ const thought = computed(() => {
 </script>
 
 <template>
-  <div class="flex rounded-xl max-w-7xl mx-auto px-2 py-6 dark:bg-gray-800 sm:px-4">
+  <div class="flex rounded-xl max-w-6xl mx-auto px-2 py-6 dark:bg-gray-800 sm:px-4">
     <img class="mr-2 flex size-10 aspect-square rounded-full border border-gray-200 bg-white object-contain sm:mr-4"
       :src="message.llmBotIcon || logo" :alt="message.llmDisplayName || 'AI'" />
 
