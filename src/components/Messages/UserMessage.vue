@@ -12,7 +12,7 @@ const { message } = defineProps<Props>()
 </script>
 
 <template>
-  <div class="flex justify-end max-w-6xl mx-auto">
+  <div class="flex justify-end max-w-5xl mx-auto">
     <div class="rounded-xl bg-gray-100 my-2 px-2 py-4 sm:px-4 flex flex-row">
       <div class="flex items-center justify-center max-w-3xl">
         <code v-if="!enableMarkdown" class="whitespace-pre-line text-gray-900 dark:text-gray-100">
@@ -25,7 +25,7 @@ const { message } = defineProps<Props>()
           <Markdown :source="message.text" />
         </div>
       </div>
-      <img v-if="avatarUrl" class="mr-2 flex size-10 rounded-full sm:mr-4" :src="avatarUrl" />
+      <img v-if="avatarUrl" class="ml-2 flex size-9 rounded-full sm:ml-4 bg-gray-200" :src="avatarUrl" />
       <div
         v-else
         class="mr-2 flex size-10 aspect-square items-center justify-center rounded-full bg-white text-center text-2xl dark:bg-gray-600 sm:mr-4"

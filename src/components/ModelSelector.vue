@@ -47,10 +47,10 @@ const { disabled = false } = defineProps<Props>()
         :disabled="disabled"
         title="Refresh available models"
         @click="performRefreshModel"
-        class="inline-flex items-center justify-center rounded-lg border-none bg-gray-100 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-100"
+        class="flex items-center justify-center rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
       >
         <IconRefresh
-          class="h-4 w-4 -scale-100 text-gray-900 decoration-gray-400 decoration-dashed outline-none hover:underline focus:ring-2 focus:ring-blue-600 dark:text-gray-100 dark:focus:ring-blue-600"
+          class="h-5 w-5 -scale-100 text-gray-900 decoration-gray-400 decoration-dashed outline-none hover:underline focus:ring-2 focus:ring-blue-600 dark:text-gray-100 dark:focus:ring-blue-600"
           :class="{ 'animate-spin': refreshingModel }"
         />
       </button>
