@@ -20,6 +20,19 @@ import { useChats } from '../services/chatAbacus2.ts'
 import { Conversation } from '../services/apiAbacus2.ts'
 import { computed } from 'vue'
 
+// Definir tipos para los elementos de la lista plana
+type HeaderItem = {
+  type: 'header'
+  title: string
+}
+
+type ChatItem = {
+  type: 'chat'
+  chat: Conversation
+}
+
+type FlattenedItem = HeaderItem | ChatItem
+
 const { chats, activeChat, switchChat, deleteChat, startNewChat } = useChats()
 
 const onNewChat = () => {
@@ -43,40 +56,101 @@ const groupedChats = computed(() => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
+  // Crear un mapa para almacenar los chats agrupados por fecha
+  const groups: Record<string, Conversation[]> = {}
 
-  const twoDaysAgo = new Date(today)
-  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+  // Definir las fechas específicas para los primeros 5 grupos
+  const specificDates = [
+    { key: 'today', date: new Date(today), title: 'TODAY' },
+    { key: 'yesterday', date: new Date(today.getTime() - 86400000), title: 'YESTERDAY' },
+    { key: 'twoDaysAgo', date: new Date(today.getTime() - 86400000 * 2), title: '2 DAYS AGO' },
+    { key: 'threeDaysAgo', date: new Date(today.getTime() - 86400000 * 3), title: '3 DAYS AGO' },
+    { key: 'fourDaysAgo', date: new Date(today.getTime() - 86400000 * 4), title: '4 DAYS AGO' }
+  ]
 
-  const threeDaysAgo = new Date(today)
-  threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
+  // Inicializar los grupos específicos
+  specificDates.forEach(({ key }) => {
+    groups[key] = []
+  })
 
-  const fourDaysAgo = new Date(today)
-  fourDaysAgo.setDate(fourDaysAgo.getDate() - 4)
+  // Mapa para almacenar chats por fecha específica (para los chats más antiguos)
+  const chatsByDate: Record<string, Conversation[]> = {}
+
+  // Clasificar cada chat en su grupo correspondiente
+  chats.value.forEach(chat => {
+    const chatDate = new Date(chat.createdAt)
+    chatDate.setHours(0, 0, 0, 0)
+
+    // Verificar si el chat pertenece a alguno de los grupos específicos
+    let assigned = false
+    for (let i = 0; i < specificDates.length; i++) {
+      const currentDate = specificDates[i].date
+      const nextDate = i > 0 ? specificDates[i-1].date : new Date(today.getTime() + 86400000)
+
+      if (chatDate >= currentDate && chatDate < nextDate) {
+        groups[specificDates[i].key].push(chat)
+        assigned = true
+        break
+      }
+    }
+
+    // Si no se asignó a ningún grupo específico, agrupar por fecha
+    if (!assigned) {
+      const dateKey = chatDate.toISOString().split('T')[0]
+      if (!chatsByDate[dateKey]) {
+        chatsByDate[dateKey] = []
+      }
+      chatsByDate[dateKey].push(chat)
+    }
+  })
 
   return {
-    today: chats.value.filter(chat => {
-      const chatDate = new Date(chat.createdAt)
-      return chatDate >= today
-    }),
-    yesterday: chats.value.filter(chat => {
-      const chatDate = new Date(chat.createdAt)
-      return chatDate >= yesterday && chatDate < today
-    }),
-    twoDaysAgo: chats.value.filter(chat => {
-      const chatDate = new Date(chat.createdAt)
-      return chatDate >= twoDaysAgo && chatDate < yesterday
-    }),
-    threeDaysAgo: chats.value.filter(chat => {
-      const chatDate = new Date(chat.createdAt)
-      return chatDate >= threeDaysAgo && chatDate < twoDaysAgo
-    }),
-    fourDaysAgo: chats.value.filter(chat => {
-      const chatDate = new Date(chat.createdAt)
-      return chatDate >= fourDaysAgo && chatDate < threeDaysAgo
-    })
+    specificGroups: specificDates.map(({ key, title }) => ({
+      key,
+      title,
+      chats: groups[key]
+    })),
+    otherGroups: Object.entries(chatsByDate)
+      .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
+      .map(([date, chats]) => {
+        // Formatear la fecha según el idioma del navegador
+        const formattedDate = new Date(date).toLocaleDateString(lang, {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        })
+        return {
+          key: date,
+          title: formattedDate.toUpperCase(),
+          chats
+        }
+      })
   }
+})
+
+// Crear una lista plana con cabeceras y chats
+const flattenedChatList = computed<FlattenedItem[]>(() => {
+  const result: FlattenedItem[] = []
+
+  // Agregar los grupos específicos (HOY, AYER, etc.)
+  groupedChats.value.specificGroups.forEach(group => {
+    if (group.chats.length > 0) {
+      result.push({ type: 'header', title: group.title })
+      group.chats.forEach(chat => {
+        result.push({ type: 'chat', chat })
+      })
+    }
+  })
+
+  // Agregar los grupos por fecha para chats más antiguos
+  groupedChats.value.otherGroups.forEach(group => {
+    result.push({ type: 'header', title: group.title })
+    group.chats.forEach(chat => {
+      result.push({ type: 'chat', chat })
+    })
+  })
+
+  return result
 })
 
 // Función para editar el nombre del chat
@@ -107,144 +181,36 @@ const editChat = (chat: Conversation) => {
       </div>
 
       <div class="h-full overflow-y-auto px-2 py-1">
-        <!-- TODAY -->
-        <div v-if="groupedChats.today.length > 0" class="mb-4">
-          <div class="mb-1 px-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-            TODAY
-          </div>
-          <div class="space-y-1">
+        <div class="space-y-1">
+          <template v-for="(item, index) in flattenedChatList" :key="index">
+            <!-- Elemento de cabecera (informativo) -->
             <div
-              v-for="chat in groupedChats.today"
-              :key="chat.deploymentConversationId"
-              @click="onSwitchChat(chat.deploymentConversationId!)"
-              :class="{
-                'bg-purple-100 dark:bg-purple-900': activeChat?.deploymentConversationId === chat.deploymentConversationId
-              }"
-              class="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+              v-if="item.type === 'header'"
+              class="mb-1 px-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400"
             >
-              <span class="text-sm text-gray-900 dark:text-gray-100">{{ chat.name }}</span>
-              <div v-if="activeChat?.deploymentConversationId === chat.deploymentConversationId" class="flex items-center space-x-1">
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="editChat(chat)">
-                  <IconPencil class="h-4 w-4" />
-                </button>
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="deleteChat(chat.deploymentConversationId!)">
-                  <IconTrashX class="h-4 w-4" />
-                </button>
-              </div>
+              {{ (item as HeaderItem).title }}
             </div>
-          </div>
-        </div>
 
-        <!-- YESTERDAY -->
-        <div v-if="groupedChats.yesterday.length > 0" class="mb-4">
-          <div class="mb-1 px-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-            YESTERDAY
-          </div>
-          <div class="space-y-1">
+            <!-- Elemento de chat (interactivo) -->
             <div
-              v-for="chat in groupedChats.yesterday"
-              :key="chat.deploymentConversationId"
-              @click="onSwitchChat(chat.deploymentConversationId!)"
+              v-else-if="item.type === 'chat'"
+              @click="onSwitchChat((item as ChatItem).chat.deploymentConversationId!)"
               :class="{
-                'bg-purple-100 dark:bg-purple-900': activeChat?.deploymentConversationId === chat.deploymentConversationId
+                'bg-purple-100 dark:bg-purple-900': activeChat?.deploymentConversationId === (item as ChatItem).chat.deploymentConversationId
               }"
               class="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
             >
-              <span class="text-sm text-gray-900 dark:text-gray-100">{{ chat.name }}</span>
-              <div v-if="activeChat?.deploymentConversationId === chat.deploymentConversationId" class="flex items-center space-x-1">
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="editChat(chat)">
+              <span class="text-sm text-gray-900 dark:text-gray-100">{{ (item as ChatItem).chat.name }}</span>
+              <div v-if="activeChat?.deploymentConversationId === (item as ChatItem).chat.deploymentConversationId" class="flex items-center space-x-1">
+                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="editChat((item as ChatItem).chat)">
                   <IconPencil class="h-4 w-4" />
                 </button>
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="deleteChat(chat.deploymentConversationId!)">
+                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="deleteChat((item as ChatItem).chat.deploymentConversationId!)">
                   <IconTrashX class="h-4 w-4" />
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-
-        <!-- 2 DAYS AGO -->
-        <div v-if="groupedChats.twoDaysAgo.length > 0" class="mb-4">
-          <div class="mb-1 px-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-            2 DAYS AGO
-          </div>
-          <div class="space-y-1">
-            <div
-              v-for="chat in groupedChats.twoDaysAgo"
-              :key="chat.deploymentConversationId"
-              @click="onSwitchChat(chat.deploymentConversationId!)"
-              :class="{
-                'bg-purple-100 dark:bg-purple-900': activeChat?.deploymentConversationId === chat.deploymentConversationId
-              }"
-              class="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-            >
-              <span class="text-sm text-gray-900 dark:text-gray-100">{{ chat.name }}</span>
-              <div v-if="activeChat?.deploymentConversationId === chat.deploymentConversationId" class="flex items-center space-x-1">
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="editChat(chat)">
-                  <IconPencil class="h-4 w-4" />
-                </button>
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="deleteChat(chat.deploymentConversationId!)">
-                  <IconTrashX class="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3 DAYS AGO -->
-        <div v-if="groupedChats.threeDaysAgo.length > 0" class="mb-4">
-          <div class="mb-1 px-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-            3 DAYS AGO
-          </div>
-          <div class="space-y-1">
-            <div
-              v-for="chat in groupedChats.threeDaysAgo"
-              :key="chat.deploymentConversationId"
-              @click="onSwitchChat(chat.deploymentConversationId!)"
-              :class="{
-                'bg-purple-100 dark:bg-purple-900': activeChat?.deploymentConversationId === chat.deploymentConversationId
-              }"
-              class="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-            >
-              <span class="text-sm text-gray-900 dark:text-gray-100">{{ chat.name }}</span>
-              <div v-if="activeChat?.deploymentConversationId === chat.deploymentConversationId" class="flex items-center space-x-1">
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="editChat(chat)">
-                  <IconPencil class="h-4 w-4" />
-                </button>
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="deleteChat(chat.deploymentConversationId!)">
-                  <IconTrashX class="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4 DAYS AGO -->
-        <div v-if="groupedChats.fourDaysAgo.length > 0" class="mb-4">
-          <div class="mb-1 px-2 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">
-            4 DAYS AGO
-          </div>
-          <div class="space-y-1">
-            <div
-              v-for="chat in groupedChats.fourDaysAgo"
-              :key="chat.deploymentConversationId"
-              @click="onSwitchChat(chat.deploymentConversationId!)"
-              :class="{
-                'bg-purple-100 dark:bg-purple-900': activeChat?.deploymentConversationId === chat.deploymentConversationId
-              }"
-              class="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
-            >
-              <span class="text-sm text-gray-900 dark:text-gray-100">{{ chat.name }}</span>
-              <div v-if="activeChat?.deploymentConversationId === chat.deploymentConversationId" class="flex items-center space-x-1">
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="editChat(chat)">
-                  <IconPencil class="h-4 w-4" />
-                </button>
-                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="deleteChat(chat.deploymentConversationId!)">
-                  <IconTrashX class="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
+          </template>
         </div>
       </div>
 
