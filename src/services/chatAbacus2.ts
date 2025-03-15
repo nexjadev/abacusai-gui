@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue'
-import { currentModelId, useConfig, currentChatId, historyChatLength } from './appConfigAbacus.ts'
+import { currentModelId, useConfig, currentChatId, historyChatLength, currentExtAppId } from './appConfigAbacus.ts'
 import { useAI } from './useAbacus.ts'
 import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, DeleteConversationRequest, ExternalApplication, History, MessageChatRequest, RenameConversationRequest, TitleConversationRequest, useApi } from './apiAbacus2.ts'
 
@@ -67,7 +67,7 @@ export function useChats() {
       if (chat) {
         setActiveChat(chat)
         if (activeChat.value) {
-          await switchModel(activeChat.value.deploymentId)
+          await switchModel(activeChat.value.deploymentId, activeChat.value.externalApplicationId)
         }
       }
     } catch (error) {
@@ -75,12 +75,13 @@ export function useChats() {
     }
   }
 
-  const switchModel = async (deploymentId: string) => {
+  const switchModel = async (deploymentId: string, externalApplicationId: string) => {
     currentModelId.value = deploymentId
+    currentExtAppId.value = externalApplicationId
     if (!activeChat.value) return
 
     try {
-      const model = availableModels.value.find(model => model.deploymentId === deploymentId)
+      const model = availableModels.value.find(model => model.deploymentId === deploymentId && model.externalApplicationId === externalApplicationId)
       if (model) {
         setActiveModel(model)
       }
@@ -106,7 +107,7 @@ export function useChats() {
     const newChat: CreateConversationRequest = {
       externalApplicationId: activeModel.value?.externalApplicationId || '',
       name: name,
-      deploymentId: currentModelId.value,
+      deploymentId: activeModel.value?.deploymentId || '',
     }
 
     try {
@@ -368,6 +369,7 @@ export function useChats() {
     chats,
     // sortedChats,
     activeChat,
+    activeModel,
     messages,
     hasMessages,
     hasActiveChat,

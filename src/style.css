@@ -83,3 +83,37 @@ pre code.hljs {
   margin-bottom: .5rem;
   margin-top: 1rem;
 }
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 70, 193, 0.5) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(107, 70, 193, 0.5);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 70, 193, 0.8);
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: rgba(147, 51, 234, 0.5) transparent;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(147, 51, 234, 0.5);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(147, 51, 234, 0.8);
+}

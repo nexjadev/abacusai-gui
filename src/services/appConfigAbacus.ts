@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import { Config, db } from './databaseAbacus.ts'
 
 export const currentModelId = useLocalStorage('currentModelId', '')
+export const currentExtAppId = useLocalStorage('currentExtAppId', '')
 export const currentChatId = useLocalStorage('currentChatId', '')
 export const gravatarEmail = useLocalStorage('gravatarEmail', '')
 export const historyChatLength = useLocalStorage('historyChatLength', 30)

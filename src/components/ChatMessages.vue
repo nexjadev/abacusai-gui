@@ -53,7 +53,7 @@ const visibleMessages = computed(() => {
 <template>
   <div
     ref="chatElement"
-    class="flex-1 overflow-y-auto scroll-smooth rounded-xl p-4 text-sm leading-6 text-gray-900 dark:text-gray-100 sm:text-base sm:leading-7"
+    class="flex-1 custom-scrollbar overflow-y-auto scroll-smooth rounded-xl p-4 text-sm leading-6 text-gray-900 dark:text-gray-100 sm:text-base sm:leading-7"
   >
     <div v-if="!visibleMessages?.length" class="flex h-full items-center justify-center">
       <p class="text-gray-500 dark:text-gray-400">

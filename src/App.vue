@@ -5,6 +5,7 @@ import ChatMessages from './components/ChatMessages.vue'
 // import SystemPrompt from './components/SystemPrompt.vue'
 import ModelSelector from './components/ModelSelector.vue'
 import {
+  currentExtAppId,
   currentModelId,
   isDarkMode,
   isSettingsOpen,
@@ -74,10 +75,10 @@ const checkSystemPromptPanel = () => {
 
 onMounted(() => {
   refreshModels().then(async () => {
-    if (currentModelId.value) {
-      await switchModel(currentModelId.value)
+    if (currentModelId.value && currentExtAppId.value) {
+      await switchModel(currentModelId.value, currentExtAppId.value)
     } else {
-      await switchModel(availableModels.value[0].deploymentId)
+      await switchModel(availableModels.value[0].deploymentId, availableModels.value[0].externalApplicationId)
     }
     await initialize()
   })

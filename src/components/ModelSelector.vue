@@ -1,14 +1,30 @@
 <script setup lang="ts">
-import { IconRefresh } from '@tabler/icons-vue'
+import { IconRefresh, IconSearch } from '@tabler/icons-vue'
 import { useChats } from '../services/chatAbacus2.ts'
 import { useAI } from '../services/useAbacus.ts'
-import { ref } from 'vue'
-import { currentModelId } from '../services/appConfigAbacus.ts'
+import { ref, computed } from 'vue'
+import { currentModelId, currentExtAppId } from '../services/appConfigAbacus.ts'
+import type { ExternalApplication } from '../services/apiAbacus2.ts'
 
-const { activeChat, switchModel, hasMessages } = useChats()
+const { activeChat, activeModel, switchModel, hasMessages } = useChats()
 const { refreshModels, availableModels } = useAI()
 
 const refreshingModel = ref(false)
+const searchQuery = ref('')
+const activeTab = ref('all')
+const isOpen = ref(false)
+
+const tabs = [
+  { id: 'all', name: 'All', count: computed(() => availableModels.value?.length || 0) },
+  { id: 'llms', name: 'LLMs', count: 18 },
+  { id: 'custom', name: 'Custom Bots', count: 2 }
+]
+
+const filteredModels = computed(() => {
+  return (availableModels.value || []).filter((model: ExternalApplication) =>
+    model.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
 
 const performRefreshModel = async () => {
   refreshingModel.value = true
@@ -16,10 +32,17 @@ const performRefreshModel = async () => {
   refreshingModel.value = false
 }
 
-const handleModelChange = (event: Event) => {
-  const wip = event.target as HTMLSelectElement
-  console.log('switch', wip.value)
-  // switchModel(wip.value)
+const handleModelChange = (modelId: string) => {
+  console.log('switch', modelId)
+  const selectedModel = availableModels.value?.find(model => model.externalApplicationId === modelId)
+  if (selectedModel) {
+    switchModel(selectedModel.deploymentId, selectedModel.externalApplicationId)
+    isOpen.value = false
+  }
+}
+
+const toggleDropdown = () => {
+  isOpen.value = !isOpen.value
 }
 
 type Props = {
@@ -29,31 +52,106 @@ const { disabled = false } = defineProps<Props>()
 </script>
 
 <template>
-  <div class="flex flex-row text-gray-900 dark:text-gray-100">
-    <div class="inline-flex items-center gap-2">
-      <select
-        :disabled="disabled"
-        :value="activeChat?.deploymentId ?? currentModelId"
-        @change="handleModelChange"
-        class="w-full cursor-pointer rounded-lg bg-white py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:opacity-50 dark:bg-gray-700 dark:text-gray-100"
+  <div class="relative text-gray-900 dark:text-gray-100">
+    <!-- Selected Model Button -->
+    <button
+      @click="toggleDropdown"
+      :disabled="disabled"
+      class="flex w-full items-center gap-3 rounded-lg bg-white p-2 text-left hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600"
+    >
+      <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
+        <span class="text-sm font-medium text-purple-600">{{ activeModel?.name?.[0] || '?' }}</span>
+      </div>
+      <div class="flex-1">
+        <div class="text-sm font-medium">{{ activeModel?.name || 'Select a model' }}</div>
+      </div>
+      <svg
+        class="h-5 w-5 transform text-gray-400 transition-transform"
+        :class="{ 'rotate-180': isOpen }"
+        viewBox="0 0 20 20"
+        fill="currentColor"
       >
-        <option :value="undefined" disabled selected>Select a model</option>
-        <option v-for="model in availableModels" :value="model.deploymentId">
-          {{ model.name }}
-        </option>
-      </select>
-
-      <button
-        :disabled="disabled"
-        title="Refresh available models"
-        @click="performRefreshModel"
-        class="flex items-center justify-center rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
-      >
-        <IconRefresh
-          class="h-5 w-5 -scale-100 text-gray-900 decoration-gray-400 decoration-dashed outline-none hover:underline focus:ring-2 focus:ring-blue-600 dark:text-gray-100 dark:focus:ring-blue-600"
-          :class="{ 'animate-spin': refreshingModel }"
+        <path
+          fill-rule="evenodd"
+          d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+          clip-rule="evenodd"
         />
-      </button>
+      </svg>
+    </button>
+
+    <!-- Dropdown Content -->
+    <div
+      v-if="isOpen"
+      class="absolute right-0 top-full z-10 mt-2 rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-700 w-[400px] max-h-[calc(100vh-100px)] flex flex-col"
+    >
+      <div class="flex flex-col gap-4 p-4">
+        <!-- Search Bar -->
+        <div class="relative">
+          <IconSearch class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search Bot..."
+            v-model="searchQuery"
+            class="w-full rounded-lg bg-white py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-gray-700 dark:text-gray-100"
+          />
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            :class="[
+              'px-4 py-2 text-sm font-medium',
+              activeTab === tab.id
+                ? 'border-b-2 border-purple-500 text-purple-600'
+                : 'text-gray-500 hover:text-gray-700'
+            ]"
+          >
+            {{ tab.name }}
+            <span class="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs dark:bg-gray-600">
+              {{ tab.count }}
+            </span>
+          </button>
+        </div>
+
+        <!-- Model List -->
+        <div class="flex flex-col gap-2 custom-scrollbar overflow-y-auto max-h-[calc(100vh-300px)]">
+          <button
+            v-for="model in filteredModels"
+            :key="model.externalApplicationId"
+            :disabled="disabled"
+            @click="handleModelChange(model.externalApplicationId)"
+            class="flex items-center gap-3 rounded-lg p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
+            :class="{ 'bg-purple-50 dark:bg-purple-900/20': model.externalApplicationId === activeModel?.externalApplicationId }"
+          >
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
+              <span class="text-sm font-medium text-purple-600">{{ model.name[0] }}</span>
+            </div>
+            <div class="flex-1">
+              <div class="text-sm font-medium">{{ model.name }}</div>
+            </div>
+          </button>
+        </div>
+
+        <!-- Refresh Button -->
+        <button
+          :disabled="disabled"
+          title="Refresh available models"
+          @click="performRefreshModel"
+          class="flex items-center justify-center rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
+        >
+          <IconRefresh
+            class="h-5 w-5 -scale-100"
+            :class="{ 'animate-spin': refreshingModel }"
+          />
+        </button>
+      </div>
     </div>
   </div>
 </template>
+
+<style scoped>
+
+</style>

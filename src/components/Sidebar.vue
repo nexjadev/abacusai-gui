@@ -207,7 +207,7 @@ const onScroll = async (event: Event) => {
         </div>
       </div>
 
-      <div class="h-full overflow-y-auto px-2 py-1" @scroll="onScroll">
+      <div class="h-full custom-scrollbar overflow-y-auto px-2 py-1" @scroll="onScroll">
         <div class="space-y-1">
           <template v-for="(item, index) in flattenedChatList" :key="index">
             <!-- Elemento de cabecera (informativo) -->
