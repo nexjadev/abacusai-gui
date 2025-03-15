@@ -152,7 +152,7 @@ export function useChats() {
         timezone: "America/Lima",
         language: "es-419"
       },
-      externalApplicationId: activeModel.value?.externalApplicationId || '' ,
+      externalApplicationId: activeModel.value?.externalApplicationId || '',
     }
 
     try {

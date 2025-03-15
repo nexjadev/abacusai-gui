@@ -50,10 +50,11 @@ export type Conversation = {
   metadata: {
     chatllmTeamsV2: boolean;
   };
+  hasHistory: boolean;
   history?: History[];
 };
 
-export type CreateConversationRequest = Omit<Conversation, 'deploymentConversationId' | 'createdAt' | 'conversationType' | 'metadata'> & {
+export type CreateConversationRequest = {
   name: string;
   deploymentId: string;
   externalApplicationId: string;

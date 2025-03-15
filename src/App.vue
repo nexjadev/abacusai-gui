@@ -56,7 +56,7 @@ const onNewChat = () => {
   const emptyChat = chats.value.find((chat: Conversation) => {
     const chatDate = new Date(chat.createdAt)
     return chatDate.toDateString() === today.toDateString() &&
-           (!chat.history || chat.history.length === 0)
+           (!chat.hasHistory)
   })
 
   if (emptyChat) {
