@@ -1,5 +1,5 @@
 import { computed, ref } from 'vue'
-import { currentModelId, useConfig, currentChatId } from './appConfigAbacus.ts'
+import { currentModelId, useConfig, currentChatId, historyChatLength } from './appConfigAbacus.ts'
 import { useAI } from './useAbacus.ts'
 import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, DeleteConversationRequest, ExternalApplication, History, MessageChatRequest, RenameConversationRequest, TitleConversationRequest, useApi } from './apiAbacus2.ts'
 
@@ -55,7 +55,7 @@ export function useChats() {
 
   const getChats = async () => {
     try {
-      chats.value = await getAllChats(currentModelId.value, '30')
+      chats.value = await getAllChats(currentModelId.value, historyChatLength.value.toString())
     } catch (error) {
       console.error('Failed to get chats:', error)
     }
@@ -382,6 +382,7 @@ export function useChats() {
     initialize,
     wipeDatabase,
     abort,
+    getChats,
     // exportChats,
     // importChats,
   }

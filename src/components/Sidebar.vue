@@ -20,7 +20,8 @@ import {
 } from '../services/appConfigAbacus.ts'
 import { useChats } from '../services/chatAbacus2.ts'
 import { Conversation } from '../services/apiAbacus2.ts'
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
+import { useInfiniteScroll } from '../composables/useInfiniteScroll'
 
 // Definir tipos para los elementos de la lista plana
 type HeaderItem = {
@@ -35,7 +36,7 @@ type ChatItem = {
 
 type FlattenedItem = HeaderItem | ChatItem
 
-const { chats, activeChat, switchChat, deleteChat, startNewChat, renameChat } = useChats()
+const { chats, activeChat, switchChat, deleteChat, startNewChat, renameChat, getChats } = useChats()
 
 const editingChatId = ref<string | null>(null)
 const newChatName = ref('')
@@ -55,6 +56,8 @@ const checkSystemPromptPanel = () => {
 }
 
 const lang = navigator.language
+
+const { handleChatScroll } = useInfiniteScroll()
 
 // Función para agrupar chats por fecha
 const groupedChats = computed(() => {
@@ -175,6 +178,13 @@ const cancelEditing = () => {
   newChatName.value = ''
 }
 
+const onScroll = async (event: Event) => {
+  await handleChatScroll(event, async () => {
+    // Recargar los chats cuando se llegue al final del scroll
+    await getChats()
+  })
+}
+
 </script>
 
 <template>
@@ -197,7 +207,7 @@ const cancelEditing = () => {
         </div>
       </div>
 
-      <div class="h-full overflow-y-auto px-2 py-1">
+      <div class="h-full overflow-y-auto px-2 py-1" @scroll="onScroll">
         <div class="space-y-1">
           <template v-for="(item, index) in flattenedChatList" :key="index">
             <!-- Elemento de cabecera (informativo) -->

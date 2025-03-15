@@ -6,7 +6,7 @@ import { Config, db } from './databaseAbacus.ts'
 export const currentModelId = useLocalStorage('currentModelId', '')
 export const currentChatId = useLocalStorage('currentChatId', '')
 export const gravatarEmail = useLocalStorage('gravatarEmail', '')
-export const historyMessageLength = useLocalStorage('historyMessageLength', 10)
+export const historyChatLength = useLocalStorage('historyChatLength', 30)
 export const avatarUrl = computed(() => gravatarEmail.value
   ? gravatarUrl(gravatarEmail.value, { size: 200, default: '/avatar.png' })
   : 'User.png',
@@ -78,5 +78,6 @@ export function useConfig() {
     initializeConfig,
     setConfig,
     getCurrentSystemMessage,
+    historyChatLength,
   }
 }
