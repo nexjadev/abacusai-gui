@@ -14,11 +14,12 @@ import { IconMenu, IconPlus } from '@tabler/icons-vue'
 import { nextTick, onMounted, ref } from 'vue'
 import { useAI } from './services/useAbacus.ts'
 import { useChats } from './services/chatAbacus2.ts'
+import { Conversation } from './services/apiAbacus2.ts'
 // import TextInput from './components/Inputs/TextInput.vue'
 // import Settings from './components/Settings.vue'
 
 const { refreshModels, availableModels } = useAI()
-const { activeChat, renameChat, switchModel, initialize, startNewChat } = useChats()
+const { activeChat, renameChat, switchModel, initialize, startNewChat, switchChat, chats } = useChats()
 const isEditingChatName = ref(false)
 const editedChatName = ref('')
 const chatNameInput = ref()
@@ -49,6 +50,21 @@ const confirmRename = () => {
 
 const onNewChat = () => {
   checkSystemPromptPanel()
+
+  // Buscar un chat vacío del día actual
+  const today = new Date()
+  const emptyChat = chats.value.find((chat: Conversation) => {
+    const chatDate = new Date(chat.createdAt)
+    return chatDate.toDateString() === today.toDateString() &&
+           (!chat.history || chat.history.length === 0)
+  })
+
+  if (emptyChat) {
+    // Si encontramos un chat vacío del día actual, lo seleccionamos
+    return switchChat(emptyChat.deploymentConversationId)
+  }
+
+  // Si no hay chats vacíos del día actual, creamos uno nuevo
   return startNewChat()
 }
 
