@@ -337,26 +337,18 @@ export function useChats() {
   const appendToAiMessage = async (data: ChatResponseSegment, currentChatId: string) => {
     const aiMessage = ongoingAiMessages.value.get(currentChatId)
     if (aiMessage) {
-      const collapsibleSegment = aiMessage.segments.find(segment => segment.type === 'collapsible_component')
-      if (collapsibleSegment?.type === data.type) {
-        Object.assign(collapsibleSegment, data)
-      }
-
-      const textSegment = aiMessage.segments.find(segment => segment.type === 'text')
-      if (textSegment?.type === data.type) {
-        textSegment.segment += data.segment
-        textSegment.messageId = data.messageId
-        textSegment.counter = data.counter
-      }
-
-      console.log('appendToAiMessage -> aiMessage -> ', aiMessage)
       try {
-        // Only "load the messages" if we are on this chat atm.
-        // if (chatId == activeChat.value?.id) {
-        //   setMessages(await dbLayer.getMessages(chatId))
-        // }
-        // console.log('appendToAiMessage -> messages -> ', messages.value)
-        // console.log('appendToAiMessage -> aiMessage -> ', aiMessage)
+        const collapsibleSegment = aiMessage.segments.find(segment => segment.type === 'collapsible_component')
+        if (collapsibleSegment?.type === data.type) {
+          Object.assign(collapsibleSegment, data)
+        }
+
+        const textSegment = aiMessage.segments.find(segment => segment.type === 'text')
+        if (textSegment?.type === data.type) {
+          textSegment.segment += data.segment
+          textSegment.messageId = data.messageId
+          textSegment.counter = data.counter
+        }
       } catch (error) {
         console.error('Failed to append to AI message:', error)
       }

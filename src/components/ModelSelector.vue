@@ -3,11 +3,12 @@ import { IconRefresh, IconSearch } from '@tabler/icons-vue'
 import { useChats } from '../services/chatAbacus2.ts'
 import { useAI } from '../services/useAbacus.ts'
 import { ref, computed } from 'vue'
-import { currentModelId, currentExtAppId } from '../services/appConfigAbacus.ts'
+import { useConfig } from '../services/appConfigAbacus.ts'
 import type { ExternalApplication } from '../services/apiAbacus2.ts'
 
 const { activeChat, activeModel, switchModel, hasMessages } = useChats()
 const { refreshModels, availableModels } = useAI()
+const { getImageDictionary } = useConfig()
 
 const refreshingModel = ref(false)
 const searchQuery = ref('')
@@ -16,8 +17,8 @@ const isOpen = ref(false)
 
 const tabs = [
   { id: 'all', name: 'All', count: computed(() => availableModels.value?.length || 0) },
-  { id: 'llms', name: 'LLMs', count: 18 },
-  { id: 'custom', name: 'Custom Bots', count: 2 }
+  // { id: 'llms', name: 'LLMs', count: 18 },
+  // { id: 'custom', name: 'Custom Bots', count: 2 }
 ]
 
 const filteredModels = computed(() => {
@@ -59,8 +60,9 @@ const { disabled = false } = defineProps<Props>()
       :disabled="disabled"
       class="flex w-full items-center gap-3 rounded-lg bg-white p-2 text-left hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600"
     >
-      <div class="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-        <span class="text-sm font-medium text-purple-600">{{ activeModel?.name?.[0] || '?' }}</span>
+      <div class="flex h-7 w-7 items-center justify-center rounded-lg">
+        <img class="size-7 aspect-square rounded-full border border-gray-200 bg-white object-contain"
+          :src="getImageDictionary(activeModel?.externalApplicationId || '')" :alt="activeModel?.name || 'AI'" />
       </div>
       <div class="flex-1">
         <div class="text-sm font-medium">{{ activeModel?.name || 'Select a model' }}</div>
@@ -126,8 +128,9 @@ const { disabled = false } = defineProps<Props>()
             class="flex items-center gap-3 rounded-lg p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
             :class="{ 'bg-purple-50 dark:bg-purple-900/20': model.externalApplicationId === activeModel?.externalApplicationId }"
           >
-            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900/30">
-              <span class="text-sm font-medium text-purple-600">{{ model.name[0] }}</span>
+            <div class="flex h-7 w-7 items-center justify-center rounded-lg">
+              <img class="size-7 aspect-square rounded-full border border-gray-200 bg-white object-contain"
+                :src="getImageDictionary(model?.externalApplicationId || '')" :alt="model?.name || 'AI'" />
             </div>
             <div class="flex-1">
               <div class="text-sm font-medium">{{ model.name }}</div>

@@ -7,6 +7,10 @@ import logo from '/logo.png'
 import { computed } from 'vue'
 import { History } from '../../services/apiAbacus2.ts'
 
+import { useConfig } from '../../services/appConfigAbacus.ts'
+
+const { getRoutingDictionary } = useConfig()
+
 interface Segment {
   type: string
   title?: string
@@ -89,34 +93,28 @@ const thought = computed(() => {
   <div class="flex rounded-xl max-w-5xl mx-auto px-2 py-6 dark:bg-gray-800 sm:px-4">
     <img class="mr-2 mt-7 flex size-9 aspect-square rounded-full border border-gray-200 bg-white object-contain sm:mr-4"
       :src="message.llmBotIcon || logo" :alt="message.llmDisplayName || 'AI'" />
-
     <div class="flex flex-col rounded-xl">
+      <span class="font-medium !text-[12px] ml-0.5 flex items-center gap-1 text-gray-600 dark:text-gray-400">
+        {{ message.llmDisplayName }}
+        <div v-if="message.routedLlm" class="flex items-center gap-1">
+          <svg  xmlns="http://www.w3.org/2000/svg"  width="16"  height="16"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-right"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" /></svg>
+          {{ getRoutingDictionary(message.routedLlm ?? '') }}
+        </div>
+      </span>
       <div v-for="(content, index) in message.segments" :key="index">
         <!-- Contenido colapsable -->
-        <span v-if="content.type === 'collapsible_component' && !content.isCollapsed" class="font-medium !text-[12px] ml-0.5 flex items-center gap-1">
-          {{ message.llmDisplayName }}
-          <div class="inline-flex items-center gap-1">
-            <div>{{ content.title }}</div>
-          </div>
-        </span>
-        <!-- <details v-if="content.type === 'collapsible_component' && content.isCollapsed"
+        <details v-if="content.type === 'collapsible_component' && content.segment.segment"
           class="whitespace-pre-wrap rounded-md mb-4 border border-blue-200 bg-blue-50 p-4 text-sm leading-tight text-blue-900 dark:border-blue-700 dark:bg-blue-800 dark:text-blue-50"
-          :open="true">
-          <summary v-if="content.title">
-            <Markdown :source="content.title" />
+          :open="!content.isCollapsed">
+          <summary>
+            {{ content.title }}
           </summary>
-          <div v-if="content.isSpinny" class="animate-spin">⌛</div>
-          <div v-else>
-            <Markdown :source="content.segment" />
-          </div>
-        </details> -->
+          {{ content.segment.segment }}
+        </details>
 
         <!-- Contenido normal -->
-        <div v-if="content.type === 'text' || content.type === 'image'" class="prose prose-base max-w-full dark:prose-invert">
-          <div v-if="content.isSpinny" class="animate-spin">⌛</div>
-          <div v-else>
-            <Markdown :source="content.segment" />
-          </div>
+        <div v-if="content.type === 'text' && !content.temp" class="prose prose-base max-w-full dark:prose-invert">
+          <Markdown :source="content.segment" />
         </div>
       </div>
     </div>
