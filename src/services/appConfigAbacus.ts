@@ -108,6 +108,7 @@ export function useConfig() {
   const getRoutingDictionary = (clave: string) => {
     const dictionary: Record<string, string> = {
       "OPENAI_GPT4O": "Routing to GPT-4o",
+      "CLAUDE_V3_5_SONNET": "Routing to Claude 3.5 Sonnet",
     }
     return dictionary[clave] ?? ''
   }

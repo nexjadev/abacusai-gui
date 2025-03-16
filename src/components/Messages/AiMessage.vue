@@ -8,8 +8,10 @@ import { computed } from 'vue'
 import { History } from '../../services/apiAbacus2.ts'
 
 import { useConfig } from '../../services/appConfigAbacus.ts'
+import { useChats } from '../../services/chatAbacus2.ts'
 
-const { getRoutingDictionary } = useConfig()
+const { getRoutingDictionary, getImageDictionary } = useConfig()
+const { activeModel } = useChats()
 
 interface Segment {
   type: string
@@ -91,11 +93,11 @@ const thought = computed(() => {
 
 <template>
   <div class="flex rounded-xl max-w-5xl mx-auto px-2 py-6 dark:bg-gray-800 sm:px-4">
-    <img class="mr-2 mt-7 flex size-9 aspect-square rounded-full border border-gray-200 bg-white object-contain sm:mr-4"
-      :src="message.llmBotIcon || logo" :alt="message.llmDisplayName || 'AI'" />
+    <img :src="message.llmBotIcon || getImageDictionary(activeModel?.externalApplicationId || '')" :alt="message.llmDisplayName || 'AI'"
+      class="mr-2 mt-7 flex size-9 aspect-square rounded-full border border-gray-200 bg-white object-contain sm:mr-4"/>
     <div class="flex flex-col rounded-xl">
       <span class="font-medium !text-[12px] ml-0.5 flex items-center gap-1 text-gray-600 dark:text-gray-400">
-        {{ message.llmDisplayName }}
+        {{ message.llmDisplayName || activeModel?.name }}
         <div v-if="message.routedLlm" class="flex items-center gap-1">
           <svg  xmlns="http://www.w3.org/2000/svg"  width="16"  height="16"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-arrow-right"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 12l14 0" /><path d="M13 18l6 -6" /><path d="M13 6l6 6" /></svg>
           {{ getRoutingDictionary(message.routedLlm ?? '') }}

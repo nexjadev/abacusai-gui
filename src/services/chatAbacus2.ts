@@ -11,6 +11,13 @@ const systemPrompt = ref<History>()
 const ongoingAiMessages = ref<Map<string, History>>(new Map())
 const TITLE_CONVERSATION = 'New Chat'
 
+// Función auxiliar para determinar si un mensaje es editable
+const isMessageEditable = (message: History): boolean => {
+  if (message.role !== 'USER') return false
+  const lastUserMessageIndex = [...messages.value].reverse().findIndex(m => m.role === 'USER')
+  return lastUserMessageIndex === 0
+}
+
 export function useChats() {
   const { generate, availableModels } = useAI()
   const { abort, getAllChats, getChat, createConversation, titleConversation, deleteConversation, renameConversation } = useApi()
@@ -157,13 +164,14 @@ export function useChats() {
     }
 
     try {
+      await startUserMessage(content, currentChatId)
       await generate(
         message,
         (data: ChatResponseSegment) => handleAiPartialResponse(data, currentChatId),
         (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId)
       );
       await updateChatTitle(currentChatId, content);
-      await getChats();
+      await switchChat(currentChatId);
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -173,6 +181,57 @@ export function useChats() {
       }
 
       console.error('Failed to add user message:', error)
+    }
+  }
+
+  const editUserMessage = async (content: string) => {
+    if (!activeChat.value) {
+      console.warn('There was no active chat.')
+      return
+    }
+
+    const currentChatId = activeChat.value.deploymentConversationId!
+    const message: MessageChatRequest = {
+      requestId: crypto.randomUUID(),
+      deploymentConversationId: currentChatId,
+      message: content,
+      isDesktop: true,
+      editPrompt: true,
+      regenerate: true,
+      chatConfig: {
+        timezone: "America/Lima",
+        language: "es-419"
+      },
+      externalApplicationId: activeModel.value?.externalApplicationId || '',
+    }
+
+    try {
+      // Encontrar y actualizar el último mensaje del usuario
+      const lastUserMessage = [...messages.value].reverse().find(m => m.role === 'USER')
+      if (lastUserMessage) {
+        lastUserMessage.text = content
+      }
+
+      // Eliminar la última respuesta del bot
+      const lastBotMessageIndex = messages.value.findIndex(m => m.role === 'BOT')
+      if (lastBotMessageIndex !== -1) {
+        messages.value.splice(lastBotMessageIndex, 1)
+      }
+
+      await generate(
+        message,
+        (data: ChatResponseSegment) => handleAiPartialResponse(data, currentChatId),
+        (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId)
+      )
+      await updateChatTitle(currentChatId, content)
+      await getChats()
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          return
+        }
+      }
+      console.error('Failed to edit user message:', error)
     }
   }
 
@@ -334,6 +393,30 @@ export function useChats() {
     }
   }
 
+  const startUserMessage = async (content: string, currentChatId: string) => {
+    try {
+      const message: History = {
+        regenerateAttempt: 0,
+        inputParams: {
+          llmName: "",
+          forceRoutingType: null
+        },
+        segments: [],
+        llmDisplayName: "",
+        llmBotIcon: "",
+        routedLlm: "",
+        role: "USER",
+        timestamp: new Date().toISOString(),
+        messageIndex: messages.value.length + 1,
+        text: content,
+        modelVersion: "",
+      }
+      messages.value.push(message)
+    } catch (error) {
+      console.error('Failed to start USER message:', error)
+    }
+  }
+
   const appendToAiMessage = async (data: ChatResponseSegment, currentChatId: string) => {
     const aiMessage = ongoingAiMessages.value.get(currentChatId)
     if (aiMessage) {
@@ -371,6 +454,7 @@ export function useChats() {
     switchChat,
     deleteChat,
     addUserMessage,
+    editUserMessage,
     regenerateResponse,
     addSystemMessage,
     initialize,

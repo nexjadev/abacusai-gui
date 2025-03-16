@@ -40,6 +40,7 @@ const { chats, activeChat, switchChat, deleteChat, startNewChat, renameChat, get
 
 const editingChatId = ref<string | null>(null)
 const newChatName = ref('')
+const searchTerm = ref('')
 
 const onNewChat = () => {
   checkSystemPromptPanel()
@@ -58,6 +59,17 @@ const checkSystemPromptPanel = () => {
 const lang = navigator.language
 
 const { handleChatScroll } = useInfiniteScroll()
+
+// Función para filtrar chats basado en el término de búsqueda
+const filteredChats = computed(() => {
+  if (!searchTerm.value.trim()) {
+    return chats.value
+  }
+  const term = searchTerm.value.toLowerCase().trim()
+  return chats.value.filter(chat =>
+    chat.name.toLowerCase().includes(term)
+  )
+})
 
 // Función para agrupar chats por fecha
 const groupedChats = computed(() => {
@@ -84,8 +96,8 @@ const groupedChats = computed(() => {
   // Mapa para almacenar chats por fecha específica (para los chats más antiguos)
   const chatsByDate: Record<string, Conversation[]> = {}
 
-  // Clasificar cada chat en su grupo correspondiente
-  chats.value.forEach(chat => {
+  // Usar filteredChats en lugar de chats.value
+  filteredChats.value.forEach(chat => {
     const chatDate = new Date(chat.createdAt)
     chatDate.setHours(0, 0, 0, 0)
 
@@ -195,6 +207,7 @@ const onScroll = async (event: Event) => {
       <div class="mx-2 mb-2">
         <div class="relative">
           <input
+            v-model="searchTerm"
             type="text"
             placeholder="Search..."
             class="w-full rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-sm text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400"

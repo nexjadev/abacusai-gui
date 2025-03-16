@@ -9,10 +9,15 @@ type Props = {
 }
 
 const { message } = defineProps<Props>()
+const emit = defineEmits(['updateMessage'])
+
+const handleMessageUpdate = (updatedMessage: any) => {
+  emit('updateMessage', updatedMessage)
+}
 </script>
 
 <template>
   <!-- <SystemMessage v-if="message.role == 'system'" :message="message" /> -->
-  <UserMessage v-if="message.role == 'USER'" :message="message" />
+  <UserMessage v-if="message.role == 'USER'" :message="message" @update-message="handleMessageUpdate"/>
   <AiMessage v-if="message.role == 'BOT'" :message="message" />
 </template>

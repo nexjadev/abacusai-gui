@@ -165,6 +165,8 @@ export type MessageChatRequest = {
   isDesktop: boolean;
   chatConfig: ChatConfig;
   externalApplicationId: string;
+  editPrompt?: boolean;
+  regenerate?: boolean;
 }
 
 // Tipo base para todos los mensajes

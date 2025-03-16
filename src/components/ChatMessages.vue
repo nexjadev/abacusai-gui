@@ -4,7 +4,7 @@ import ChatMessage from './ChatMessage.vue'
 import { useChats } from '../services/chatAbacus2.ts'
 import { showSystem } from '../services/appConfigAbacus.ts'
 
-const { messages } = useChats()
+const { messages, editUserMessage } = useChats()
 const chatElement = ref<HTMLElement>()
 const userInterferedWithScroll = ref(false)
 
@@ -17,6 +17,12 @@ const isAtBottom = () => {
 
 const handleUserScroll = () => {
   userInterferedWithScroll.value = !isAtBottom()
+}
+
+const handleMessageUpdate = async (updatedMessage: any) => {
+  if (updatedMessage.role === 'USER') {
+    await editUserMessage(updatedMessage.text)
+  }
 }
 
 const scrollToBottom = () => {
@@ -60,6 +66,10 @@ const visibleMessages = computed(() => {
         Escribe un mensaje para comenzar la conversación...
       </p>
     </div>
-    <ChatMessage v-for="message in visibleMessages" :message="message" />
+    <ChatMessage
+      v-for="message in visibleMessages"
+      :message="message"
+      @update-message="handleMessageUpdate"
+    />
   </div>
 </template>
