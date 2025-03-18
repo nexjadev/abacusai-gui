@@ -50,7 +50,7 @@ const saveEdit = () => {
     @mouseleave="isHovered = false"
   >
     <button v-if="isHovered && !isEditing && isEditable"
-      class="p-2 mr-2 rounded-full bg-purple-500/30 hover:bg-purple-500/50 transition-colors"
+      class="p-2 mr-2 rounded-full bg-purple-500/30 hover:bg-purple-500/40 hover:text-purple-700 transition-colors"
       @click="startEditing"
     >
       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

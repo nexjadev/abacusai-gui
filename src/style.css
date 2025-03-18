@@ -96,6 +96,10 @@ pre code.hljs {
   margin-bottom: .5em;
   padding: 0;
 }
+.prose-base :where(hr):not(:where([class~="not-prose"],[class~="not-prose"] *)) {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+}
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(107, 70, 193, 0.5) transparent;

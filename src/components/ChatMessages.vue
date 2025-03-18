@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue'
 import ChatMessage from './ChatMessage.vue'
+import DocumentsUploaded from './DocumentsUploaded.vue'
 import { useChats } from '../services/chatAbacus2.ts'
 import { showSystem } from '../services/appConfigAbacus.ts'
 
@@ -66,6 +67,7 @@ const visibleMessages = computed(() => {
         Escribe un mensaje para comenzar la conversación...
       </p>
     </div>
+    <DocumentsUploaded />
     <ChatMessage
       v-for="message in visibleMessages"
       :message="message"

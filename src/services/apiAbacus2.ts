@@ -76,8 +76,17 @@ export type RenameConversationRequest = {
   name: string;
 }
 
+export type DetachDocumentsRequest = {
+  documentUploadIds: string[];
+  deploymentConversationId: string;
+}
+
 export type TitleConversationResponse = {
   title: string;
+}
+
+export type UploadDataConversationResponse = {
+  request_id: string;
 }
 
 type InputParams = {
@@ -199,6 +208,25 @@ export type ChatFinalResponse = {
   end: boolean;
   success: boolean;
   counter: number;
+}
+
+export type DocumentFile = {
+  doc_id: string;
+  filename: string;
+  mime_type: string;
+  uploaded_at: string;
+  size: number;
+  page_count: number | null;
+  document_upload_id: string;
+  processing_error: string | null;
+  created_at: string;
+  metadata: Record<string, unknown>;
+  message_index: number | null;
+};
+
+export type ListFilesResponse = {
+  docInfos: DocumentFile[];
+  maxCount: number;
 }
 
 // Tipo unión para manejar cualquier tipo de mensaje
@@ -396,6 +424,62 @@ export const useApi = () => {
     }
   }
 
+  // Upload a file to a Conversation
+  const uploadDataConversation = async (formData: FormData): Promise<UploadDataConversationResponse> => {
+    const response = await fetch(getApiUrl('/conversations/upload-data'), {
+      method: 'POST',
+      body: formData,
+    })
+    const response_request: UploadDataConversationResponse = await response.json()
+    return response_request
+  }
+
+  // Obtener lista de archivos de una conversación
+  const getAllDocuments = async (deploymentConversationId: string): Promise<ListFilesResponse> => {
+    const response = await fetch(getApiUrl('/conversations/files'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ deploymentConversationId }),
+    })
+    const response_request: AbacusResponse<ListFilesResponse> = await response.json()
+    return response_request.result as ListFilesResponse
+  }
+
+  // Obtener el archivo de una conversación
+  const getOneDocument = async (requestId: string): Promise<ListFilesResponse> => {
+    const response = await fetch(getApiUrl('/conversations/upload-status/' + requestId), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+    const response_request: any = await response.json()
+    if (response_request.status == 'SUCCESS') {
+      const new_response = response_request.result as AbacusResponse<ListFilesResponse>
+      return new_response.result as ListFilesResponse
+    }
+    throw new Error('Error al obtener el archivo de la conversación')
+  }
+
+  // desvincular documentos de una conversación
+  const detachDocumentsConversation = async (request: DetachDocumentsRequest): Promise<ListFilesResponse> => {
+    const response = await fetch(getApiUrl('/conversations/detach/documents'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    })
+    const response_request: AbacusResponse<ListFilesResponse> = await response.json()
+    console.log('response_request -> ', response_request)
+    if (!response_request.success) {
+      throw new Error(response_request.error)
+    }
+    return response_request.result as ListFilesResponse
+  }
+
   const abort = () => {
     if (abortController.value) {
       abortController.value.abort()
@@ -403,6 +487,11 @@ export const useApi = () => {
       signal.value = abortController.value.signal
       console.log('Fetch request aborted and controller reset')
     }
+  }
+
+  // Construir URL para descargar un documento por su ID
+  const getDocumentDownloadUrl = (docId: string): string => {
+    return getApiUrl(`/conversations/documents/store?docId=${docId}&maxWidth=100&maxHeight=100`)
   }
 
   return {
@@ -423,5 +512,10 @@ export const useApi = () => {
     titleConversation,
     deleteConversation,
     renameConversation,
+    uploadDataConversation,
+    getAllDocuments,
+    getOneDocument,
+    getDocumentDownloadUrl,
+    detachDocumentsConversation,
   }
 }

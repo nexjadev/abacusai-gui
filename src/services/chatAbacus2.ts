@@ -1,7 +1,29 @@
 import { computed, ref } from 'vue'
-import { currentModelId, useConfig, currentChatId, historyChatLength, currentExtAppId } from './appConfigAbacus.ts'
+import {
+  currentModelId,
+  useConfig,
+  currentChatId,
+  historyChatLength,
+  currentExtAppId,
+} from './appConfigAbacus.ts'
 import { useAI } from './useAbacus.ts'
-import { ChatFinalResponse, ChatResponseSegment, Conversation, CreateConversationRequest, DeleteConversationRequest, ExternalApplication, History, MessageChatRequest, RenameConversationRequest, TitleConversationRequest, useApi } from './apiAbacus2.ts'
+import {
+  ChatFinalResponse,
+  ChatResponseSegment,
+  Conversation,
+  CreateConversationRequest,
+  DeleteConversationRequest,
+  DetachDocumentsRequest,
+  DocumentFile,
+  ExternalApplication,
+  History,
+  MessageChatRequest,
+  RenameConversationRequest,
+  TitleConversationRequest,
+  UploadDataConversationResponse,
+  useApi,
+  getOneDocument,
+} from './apiAbacus2.ts'
 
 const chats = ref<Conversation[]>([])
 const activeChat = ref<Conversation | null>(null)
@@ -10,17 +32,32 @@ const messages = ref<History[]>([])
 const systemPrompt = ref<History>()
 const ongoingAiMessages = ref<Map<string, History>>(new Map())
 const TITLE_CONVERSATION = 'New Chat'
+const documentsUploaded = ref<DocumentFile[]>([])
 
 // Función auxiliar para determinar si un mensaje es editable
 const isMessageEditable = (message: History): boolean => {
   if (message.role !== 'USER') return false
-  const lastUserMessageIndex = [...messages.value].reverse().findIndex(m => m.role === 'USER')
+  const lastUserMessageIndex = [...messages.value]
+    .reverse()
+    .findIndex((m) => m.role === 'USER')
   return lastUserMessageIndex === 0
 }
 
 export function useChats() {
   const { generate, availableModels } = useAI()
-  const { abort, getAllChats, getChat, createConversation, titleConversation, deleteConversation, renameConversation } = useApi()
+  const {
+    abort,
+    getAllChats,
+    getChat,
+    createConversation,
+    titleConversation,
+    deleteConversation,
+    renameConversation,
+    uploadDataConversation,
+    getAllDocuments,
+    detachDocumentsConversation,
+    getOneDocument,
+  } = useApi()
 
   const hasActiveChat = computed(() => activeChat.value !== null)
   const hasMessages = computed(() => messages.value.length > 0)
@@ -54,6 +91,7 @@ export function useChats() {
       }
       if (currentChatId.value) {
         await switchChat(currentChatId.value)
+        await getAllDocumentsUploaded()
       }
     } catch (error) {
       console.error('Failed to initialize chats:', error)
@@ -62,7 +100,10 @@ export function useChats() {
 
   const getChats = async () => {
     try {
-      chats.value = await getAllChats(currentModelId.value, historyChatLength.value.toString())
+      chats.value = await getAllChats(
+        currentModelId.value,
+        historyChatLength.value.toString(),
+      )
     } catch (error) {
       console.error('Failed to get chats:', error)
     }
@@ -74,7 +115,16 @@ export function useChats() {
       if (chat) {
         setActiveChat(chat)
         if (activeChat.value) {
-          await switchModel(activeChat.value.deploymentId, activeChat.value.externalApplicationId)
+          await switchModel(
+            activeChat.value.deploymentId,
+            activeChat.value.externalApplicationId,
+          )
+        }
+        const chatExists = chats.value.some(
+          (c) => c.deploymentConversationId === chat.deploymentConversationId,
+        )
+        if (!chatExists) {
+          chats.value.unshift(chat)
         }
       }
     } catch (error) {
@@ -88,7 +138,11 @@ export function useChats() {
     if (!activeChat.value) return
 
     try {
-      const model = availableModels.value.find(model => model.deploymentId === deploymentId && model.externalApplicationId === externalApplicationId)
+      const model = availableModels.value.find(
+        (model) =>
+          model.deploymentId === deploymentId &&
+          model.externalApplicationId === externalApplicationId,
+      )
       if (model) {
         setActiveModel(model)
       }
@@ -157,8 +211,8 @@ export function useChats() {
       message: content,
       isDesktop: true,
       chatConfig: {
-        timezone: "America/Lima",
-        language: "es-419"
+        timezone: 'America/Lima',
+        language: 'es-419',
       },
       externalApplicationId: activeModel.value?.externalApplicationId || '',
     }
@@ -168,10 +222,10 @@ export function useChats() {
       await generate(
         message,
         (data: ChatResponseSegment) => handleAiPartialResponse(data, currentChatId),
-        (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId)
-      );
-      await updateChatTitle(currentChatId, content);
-      await switchChat(currentChatId);
+        (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId),
+      )
+      await updateChatTitle(currentChatId, content)
+      await switchChat(currentChatId)
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -199,21 +253,21 @@ export function useChats() {
       editPrompt: true,
       regenerate: true,
       chatConfig: {
-        timezone: "America/Lima",
-        language: "es-419"
+        timezone: 'America/Lima',
+        language: 'es-419',
       },
       externalApplicationId: activeModel.value?.externalApplicationId || '',
     }
 
     try {
       // Encontrar y actualizar el último mensaje del usuario
-      const lastUserMessage = [...messages.value].reverse().find(m => m.role === 'USER')
+      const lastUserMessage = [...messages.value].reverse().find((m) => m.role === 'USER')
       if (lastUserMessage) {
         lastUserMessage.text = content
       }
 
       // Eliminar la última respuesta del bot
-      const lastBotMessageIndex = messages.value.findIndex(m => m.role === 'BOT')
+      const lastBotMessageIndex = messages.value.findIndex((m) => m.role === 'BOT')
       if (lastBotMessageIndex !== -1) {
         messages.value.splice(lastBotMessageIndex, 1)
       }
@@ -221,7 +275,7 @@ export function useChats() {
       await generate(
         message,
         (data: ChatResponseSegment) => handleAiPartialResponse(data, currentChatId),
-        (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId)
+        (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId),
       )
       await updateChatTitle(currentChatId, content)
       await getChats()
@@ -235,36 +289,10 @@ export function useChats() {
     }
   }
 
-  const regenerateResponse = async () => {
-    // if (!activeChat.value) return
-    // const currentChatId = activeChat.value.deploymentConversationId!
-    // const message = messages.value[messages.value.length - 1]
-    // if (message && message.role === 'assistant') {
-    //   if (message.id) db.messages.delete(message.id)
-    //   messages.value.pop()
-    // }
-    // try {
-    //   await generate(
-    //     currentModel.value,
-    //     messages.value,
-    //     systemPrompt.value,
-    //     historyMessageLength.value,
-    //     (data) => handleAiPartialResponse(data, currentChatId),
-    //     (data) => handleAiCompletion(data, currentChatId),
-    //   )
-    // } catch (error) {
-    //   if (error instanceof Error) {
-    //     if (error.name === 'AbortError') {
-    //       ongoingAiMessages.value.delete(currentChatId)
-    //       return
-    //     }
-    //   }
-    //   console.error('Failed to regenerate response:', error)
-    // }
-  }
-
   const handleAiPartialResponse = (data: ChatResponseSegment, currentChatId: string) => {
-    ongoingAiMessages.value.has(currentChatId) ? appendToAiMessage(data, currentChatId) : startAiMessage(data, currentChatId)
+    ongoingAiMessages.value.has(currentChatId)
+      ? appendToAiMessage(data, currentChatId)
+      : startAiMessage(data, currentChatId)
   }
 
   const handleAiCompletion = async (data: ChatFinalResponse, currentChatId: string) => {
@@ -309,7 +337,7 @@ export function useChats() {
     }
   }
 
-  const deleteChat = async (deploymentId: string,deploymentConversationId: string) => {
+  const deleteChat = async (deploymentId: string, deploymentConversationId: string) => {
     try {
       const request: DeleteConversationRequest = {
         deploymentId: deploymentId,
@@ -318,7 +346,9 @@ export function useChats() {
       await deleteConversation(request)
 
       // Encontrar el índice del chat a eliminar
-      const chatIndex = chats.value.findIndex(chat => chat.deploymentConversationId === deploymentConversationId)
+      const chatIndex = chats.value.findIndex(
+        (chat) => chat.deploymentConversationId === deploymentConversationId,
+      )
       if (chatIndex !== -1) {
         // Remover el chat de la lista
         chats.value.splice(chatIndex, 1)
@@ -338,47 +368,95 @@ export function useChats() {
     }
   }
 
+  const uploadDataChat = async (
+    deploymentId: string,
+    deploymentConversationId: string,
+    file: File,
+  ): Promise<UploadDataConversationResponse> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('deploymentId', deploymentId)
+    formData.append('deploymentConversationId', deploymentConversationId)
+
+    try {
+      const response = await uploadDataConversation(formData)
+      return response
+    } catch (error) {
+      console.error('Error al subir el archivo:', error)
+      throw error
+    }
+  }
+
+  const getAllDocumentsUploaded = async () => {
+    if (!activeChat.value) {
+      console.warn('There was no active chat.')
+      return
+    }
+    const response = await getAllDocuments(
+      activeChat.value?.deploymentConversationId ?? '',
+    )
+    documentsUploaded.value = response.docInfos
+  }
+
+  const getOneDocumentUploaded = async (requestId: string): Promise<DocumentFile | null> => {
+    const response = await getOneDocument(requestId)
+    return response.docInfos ? response.docInfos[0] : null
+  }
+
+  const detachDocuments = async (docId: string) => {
+    if (!activeChat.value) {
+      console.warn('There was no active chat.')
+      return
+    }
+    const request: DetachDocumentsRequest = {
+      documentUploadIds: [docId],
+      deploymentConversationId: activeChat.value?.deploymentConversationId ?? '',
+    }
+    const response = await detachDocumentsConversation(request)
+    documentsUploaded.value = response.docInfos
+  }
+
   const startAiMessage = async (data: ChatResponseSegment, currentChatId: string) => {
     const message: History = {
       regenerateAttempt: 0,
       inputParams: {
-        llmName: "",
-        forceRoutingType: null
+        llmName: '',
+        forceRoutingType: null,
       },
       segments: [],
-      llmDisplayName: activeModel.value?.name || "",
-      llmBotIcon: "",
-      routedLlm: "",
-      role: "BOT",
+      llmDisplayName: activeModel.value?.name || '',
+      llmBotIcon: '',
+      routedLlm: '',
+      role: 'BOT',
       timestamp: new Date().toISOString(),
       messageIndex: messages.value.length + 1,
-      text: "",
-      modelVersion: "",
+      text: '',
+      modelVersion: '',
     }
     const collapsibleComponent: ChatResponseSegment = {
-      type: "collapsible_component",
-      title: "",
+      type: 'collapsible_component',
+      title: '',
       counter: 0,
       segment: {
         temp: false,
-        type: "text",
+        type: 'text',
         title: null,
-        segment: "",
+        segment: '',
         isSpinny: false,
         messageId: null,
-        isGeneratingImage: false
+        isGeneratingImage: false,
       },
       isSpinny: true,
       isRouting: false,
-      messageId: "",
+      messageId: '',
       isCollapsed: false,
-      isComplexSegment: true
+      isComplexSegment: true,
     }
     message.segments.push(collapsibleComponent)
     const textSegment: ChatResponseSegment = {
-      type: "text",
-      segment: "",
-      messageId: "",
+      type: 'text',
+      segment: '',
+      messageId: '',
       counter: 0,
     }
     message.segments.push(textSegment)
@@ -398,18 +476,18 @@ export function useChats() {
       const message: History = {
         regenerateAttempt: 0,
         inputParams: {
-          llmName: "",
-          forceRoutingType: null
+          llmName: '',
+          forceRoutingType: null,
         },
         segments: [],
-        llmDisplayName: "",
-        llmBotIcon: "",
-        routedLlm: "",
-        role: "USER",
+        llmDisplayName: '',
+        llmBotIcon: '',
+        routedLlm: '',
+        role: 'USER',
         timestamp: new Date().toISOString(),
         messageIndex: messages.value.length + 1,
         text: content,
-        modelVersion: "",
+        modelVersion: '',
       }
       messages.value.push(message)
     } catch (error) {
@@ -421,12 +499,14 @@ export function useChats() {
     const aiMessage = ongoingAiMessages.value.get(currentChatId)
     if (aiMessage) {
       try {
-        const collapsibleSegment = aiMessage.segments.find(segment => segment.type === 'collapsible_component')
+        const collapsibleSegment = aiMessage.segments.find(
+          (segment) => segment.type === 'collapsible_component',
+        )
         if (collapsibleSegment?.type === data.type) {
           Object.assign(collapsibleSegment, data)
         }
 
-        const textSegment = aiMessage.segments.find(segment => segment.type === 'text')
+        const textSegment = aiMessage.segments.find((segment) => segment.type === 'text')
         if (textSegment?.type === data.type) {
           textSegment.segment += data.segment
           textSegment.messageId = data.messageId
@@ -448,6 +528,7 @@ export function useChats() {
     messages,
     hasMessages,
     hasActiveChat,
+    documentsUploaded,
     renameChat,
     switchModel,
     startNewChat,
@@ -455,7 +536,6 @@ export function useChats() {
     deleteChat,
     addUserMessage,
     editUserMessage,
-    regenerateResponse,
     addSystemMessage,
     initialize,
     wipeDatabase,
@@ -463,5 +543,9 @@ export function useChats() {
     getChats,
     // exportChats,
     // importChats,
+    uploadDataChat,
+    getAllDocumentsUploaded,
+    getOneDocumentUploaded,
+    detachDocuments,
   }
 }
