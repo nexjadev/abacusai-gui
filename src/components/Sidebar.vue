@@ -17,9 +17,9 @@ import {
   isSystemPromptOpen,
   toggleSettingsPanel,
   toggleSystemPromptPanel,
-} from '../services/appConfigAbacus.ts'
-import { useChats } from '../services/chatAbacus2.ts'
-import { Conversation } from '../services/apiAbacus2.ts'
+} from '../services/appConfig.ts'
+import { useChats } from '../services/chat.ts'
+import { Conversation } from '../services/api.ts'
 import { computed, ref, onMounted } from 'vue'
 import { useInfiniteScroll } from '../composables/useInfiniteScroll'
 

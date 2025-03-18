@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useChats } from '../services/chatAbacus2.ts'
-import { useApi } from '../services/apiAbacus2.ts'
+import { useChats } from '../services/chat.ts'
+import { useApi } from '../services/api.ts'
 
 const { documentsUploaded, detachDocuments } = useChats()
 const { getDocumentDownloadUrl } = useApi()

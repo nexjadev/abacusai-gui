@@ -1,5 +1,4 @@
 import { ref } from 'vue'
-import { baseUrl } from './appConfig.ts'
 
 export type SSESegment = {
   type: string;
@@ -497,14 +496,7 @@ export const useApi = () => {
   return {
     error,
     generateChat,
-    // createModel,
     listLocalModels,
-    // showModelInformation,
-    // copyModel,
-    // deleteModel,
-    // pullModel,
-    // pushModel,
-    // generateEmbeddings,
     abort,
     getAllChats,
     getChat,

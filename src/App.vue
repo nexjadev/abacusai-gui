@@ -10,12 +10,12 @@ import {
   isDarkMode,
   isSettingsOpen,
   isSystemPromptOpen,
-} from './services/appConfigAbacus.ts'
+} from './services/appConfig.ts'
 import { IconMenu, IconPlus } from '@tabler/icons-vue'
 import { nextTick, onMounted, ref } from 'vue'
-import { useAI } from './services/useAbacus.ts'
-import { useChats } from './services/chatAbacus2.ts'
-import { Conversation } from './services/apiAbacus2.ts'
+import { useAI } from './services/useAi.ts'
+import { useChats } from './services/chat.ts'
+import { Conversation } from './services/api.ts'
 // import TextInput from './components/Inputs/TextInput.vue'
 // import Settings from './components/Settings.vue'
 

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { IconRefresh, IconSearch } from '@tabler/icons-vue'
-import { useChats } from '../services/chatAbacus2.ts'
-import { useAI } from '../services/useAbacus.ts'
+import { useChats } from '../services/chat.ts'
+import { useAI } from '../services/useAi.ts'
 import { ref, computed } from 'vue'
-import { useConfig } from '../services/appConfigAbacus.ts'
-import type { ExternalApplication } from '../services/apiAbacus2.ts'
+import { useConfig } from '../services/appConfig.ts'
+import type { ExternalApplication } from '../services/api.ts'
 
 const { activeChat, activeModel, switchModel, hasMessages } = useChats()
 const { refreshModels, availableModels } = useAI()

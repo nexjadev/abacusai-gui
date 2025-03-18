@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { historyChatLength } from '../services/appConfigAbacus'
+import { historyChatLength } from '../services/appConfig'
 
 export function useInfiniteScroll() {
   const isLoadingMoreChats = ref(false)

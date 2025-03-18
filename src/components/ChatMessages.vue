@@ -2,8 +2,8 @@
 import { computed, nextTick, onMounted, onUnmounted, onUpdated, ref, watch } from 'vue'
 import ChatMessage from './ChatMessage.vue'
 import DocumentsUploaded from './DocumentsUploaded.vue'
-import { useChats } from '../services/chatAbacus2.ts'
-import { showSystem } from '../services/appConfigAbacus.ts'
+import { useChats } from '../services/chat.ts'
+import { showSystem } from '../services/appConfig.ts'
 
 const { messages, editUserMessage } = useChats()
 const chatElement = ref<HTMLElement>()

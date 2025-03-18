@@ -1,10 +1,9 @@
 <script setup lang="ts">
-// import { Message } from '../../services/database.ts'
-import { avatarUrl, enableMarkdown } from '../../services/appConfigAbacus.ts'
+import { avatarUrl, enableMarkdown } from '../../services/appConfig.ts'
 import Markdown from '../Markdown.ts'
-import { History } from '../../services/apiAbacus2.ts'
+import { History } from '../../services/api.ts'
 import { ref, computed } from 'vue'
-import { useChats } from '../../services/chatAbacus2.ts'
+import { useChats } from '../../services/chat.ts'
 
 type Props = {
   message: History

@@ -1,7 +1,7 @@
 import { useLocalStorage } from '@vueuse/core'
 import gravatarUrl from 'gravatar-url'
 import { computed, ref } from 'vue'
-import { Config, db } from './databaseAbacus.ts'
+import { Config, db } from './database.ts'
 
 export const currentModelId = useLocalStorage('currentModelId', '')
 export const currentExtAppId = useLocalStorage('currentExtAppId', '')

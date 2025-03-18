@@ -5,8 +5,8 @@ import {
   currentChatId,
   historyChatLength,
   currentExtAppId,
-} from './appConfigAbacus.ts'
-import { useAI } from './useAbacus.ts'
+} from './appConfig.ts'
+import { useAI } from './useAi.ts'
 import {
   ChatFinalResponse,
   ChatResponseSegment,
@@ -23,7 +23,7 @@ import {
   UploadDataConversationResponse,
   useApi,
   getOneDocument,
-} from './apiAbacus2.ts'
+} from './api.ts'
 
 const chats = ref<Conversation[]>([])
 const activeChat = ref<Conversation | null>(null)

@@ -2,7 +2,7 @@
 import SystemMessage from './Messages/SystemMessage.vue'
 import UserMessage from './Messages/UserMessage.vue'
 import AiMessage from './Messages/AiMessage.vue'
-import { History } from '../services/apiAbacus2.ts'
+import { History } from '../services/api.ts'
 
 type Props = {
   message: History

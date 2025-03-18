@@ -1,7 +1,7 @@
 import { ref } from 'vue'
-import { ChatFinalResponse, ChatResponseSegment, ExternalApplication, MessageChatRequest, StreamMessage, useApi } from './apiAbacus2'
-import { currentModelId } from './appConfigAbacus'
-import { History, SSEChatPartResponse, SSESegment } from './apiAbacus2'
+import { ChatFinalResponse, ChatResponseSegment, ExternalApplication, MessageChatRequest, StreamMessage, useApi } from './api'
+import { currentModelId } from './appConfig'
+import { History, SSEChatPartResponse, SSESegment } from './api'
 
 const availableModels = ref<ExternalApplication[]>([])
 

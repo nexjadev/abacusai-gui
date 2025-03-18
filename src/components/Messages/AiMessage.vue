@@ -1,94 +1,19 @@
 <script setup lang="ts">
-// import { Message } from '../../services/databaseAbacus.ts'
-import { enableMarkdown } from '../../services/appConfigAbacus.ts'
 import Markdown from '../Markdown.ts'
 import 'highlight.js/styles/github-dark.css'
-import logo from '/logo.png'
 import { computed } from 'vue'
-import { History } from '../../services/apiAbacus2.ts'
-
-import { useConfig } from '../../services/appConfigAbacus.ts'
-import { useChats } from '../../services/chatAbacus2.ts'
+import { History } from '../../services/api.ts'
+import { useConfig } from '../../services/appConfig.ts'
+import { useChats } from '../../services/chat.ts'
 
 const { getRoutingDictionary, getImageDictionary } = useConfig()
 const { activeModel } = useChats()
-
-interface Segment {
-  type: string
-  title?: string
-  counter: number
-  segment: string | {
-    temp: boolean
-    type: string
-    title: string | null
-    segment: string
-    isSpinny: boolean
-    messageId: string | null
-    isGeneratingImage: boolean
-  }
-  isSpinny?: boolean
-  isRouting?: boolean
-  messageId: string
-  isCollapsed?: boolean
-  isComplexSegment?: boolean
-}
-
-interface Message {
-  regenerateAttempt: number
-  inputParams: {
-    llmName: string
-    forceRoutingType: string | null
-  }
-  segments: Segment[]
-  streamedData: string
-  streamedSectionData: any[]
-  llmDisplayName: string
-  llmBotIcon: string
-  routedLlm: string
-  role: string
-  timestamp: string
-  messageIndex: number
-  text: string
-  modelVersion: string
-}
 
 type Props = {
   message: History
 }
 
 const { message } = defineProps<Props>()
-
-const messageContent = computed(() => {
-  return message.segments.map(segment => {
-    if (segment.type === 'collapsible_component') {
-      return {
-        isComplexSegment: segment.isComplexSegment,
-        isCollapsible: true,
-        title: segment.title,
-        content: typeof segment.segment === 'object' ? segment.segment.segment : segment.segment,
-        isSpinny: segment.isSpinny
-      }
-    } else {
-      return {
-        isCollapsible: false,
-        content: typeof segment.segment === 'object' ? segment.segment.segment : segment.segment,
-        isSpinny: segment.isSpinny || false
-      }
-    }
-  })
-})
-
-const thought = computed(() => {
-  const end = message.text.indexOf('</think>')
-  if (end != -1) {
-    return [
-      message.text.substring('<think>'.length, end),
-      message.text.substring(end + '</think>'.length),
-    ]
-  } else {
-    return [null, message.text]
-  }
-})
 </script>
 
 <template>

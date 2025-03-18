@@ -1,19 +1,17 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useTextareaAutosize } from '@vueuse/core'
-import { useChats } from '../services/chatAbacus2.ts'
-import { showSystem } from '../services/appConfigAbacus.ts'
+import { useChats } from '../services/chat.ts'
+import { showSystem } from '../services/appConfig.ts'
 import { IconPlayerStopFilled, IconSend, IconWhirl } from '@tabler/icons-vue'
-import { DocumentFile } from '../services/apiAbacus2.ts'
-import { useApi } from '../services/apiAbacus2.ts'
+import { DocumentFile } from '../services/api.ts'
+import { useApi } from '../services/api.ts'
 
 const { textarea, input: userInput } = useTextareaAutosize({ input: '' })
 const {
   addSystemMessage,
   addUserMessage,
   abort,
-  hasActiveChat,
-  hasMessages,
   uploadDataChat,
   activeChat,
   activeModel,
