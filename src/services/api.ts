@@ -184,12 +184,23 @@ interface BaseStreamMessage {
   message_id?: string;
 }
 
+export type ChatResponseSubSegment = {
+  type: string;
+  message_id: string;
+  segment: string | string[];
+  id: string;
+  temp: boolean;
+  is_spinny: boolean;
+  title: string;
+  is_generating_image: boolean;
+}
+
 // Tipo para los segmentos de respuesta
 export type ChatResponseSegment = {
   type: string;
   temp?: boolean;
   isSpinny?: boolean;
-  segment?: string | any;
+  segment?: string | ChatResponseSubSegment;
   title?: string;
   isGeneratingImage?: boolean;
   messageId: string;
@@ -199,6 +210,11 @@ export type ChatResponseSegment = {
   isRouting?: boolean;
   isCollapsed?: boolean;
   isComplexSegment?: boolean;
+  model?: string;
+  language?: string;
+  showExecuteButton?: boolean;
+  codeId?: string;
+  indentLevel?: number;
 }
 
 // Tipo para la respuesta final

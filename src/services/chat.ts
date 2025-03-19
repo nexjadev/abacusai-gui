@@ -35,6 +35,11 @@ const TITLE_CONVERSATION = 'New Chat'
 const documentsUploaded = ref<DocumentFile[]>([])
 const filesUploaded = ref<DocumentFile[]>([])
 
+const clearUploadedFiles = () => {
+  filesUploaded.value = []
+  documentsUploaded.value = []
+}
+
 // Función auxiliar para determinar si un mensaje es editable
 const isMessageEditable = (message: History): boolean => {
   if (message.role !== 'USER') return false
@@ -88,7 +93,7 @@ export function useChats() {
     try {
       await getChats()
       if (chats.value.length == 0) {
-        await startNewChat()
+        await createNewChat()
       }
       if (currentChatId.value) {
         await switchChat(currentChatId.value)
@@ -127,7 +132,7 @@ export function useChats() {
         if (!chatExists) {
           chats.value.unshift(chat)
         }
-        filesUploaded.value = []
+        clearUploadedFiles()
       }
     } catch (error) {
       console.error(`Failed to switch to chat with ID ${currentModelId.value}:`, error)
@@ -137,8 +142,6 @@ export function useChats() {
   const switchModel = async (deploymentId: string, externalApplicationId: string) => {
     currentModelId.value = deploymentId
     currentExtAppId.value = externalApplicationId
-    if (!activeChat.value) return
-
     try {
       const model = availableModels.value.find(
         (model) =>
@@ -166,7 +169,27 @@ export function useChats() {
     await getChats()
   }
 
-  const startNewChat = async (name: string = TITLE_CONVERSATION) => {
+  const startNewChat = async () => {
+    const chat: Conversation = {
+      deploymentConversationId: '',
+      name: '',
+      deploymentId: '',
+      createdAt: new Date(),
+      externalApplicationId: '',
+      conversationType: 'CHATLLM',
+      metadata: {
+        chatllmTeamsV2: false
+      },
+      hasHistory: false,
+      history: []
+    }
+
+    setActiveChat(chat)
+    await addSystemMessage(await useConfig().getCurrentSystemMessage())
+    clearUploadedFiles()
+  }
+
+  const createNewChat = async (name: string = TITLE_CONVERSATION) => {
     const newChat: CreateConversationRequest = {
       externalApplicationId: activeModel.value?.externalApplicationId || '',
       name: name,
@@ -177,7 +200,7 @@ export function useChats() {
       const newConversation = await createConversation(newChat)
       setActiveChat(newConversation)
       await addSystemMessage(await useConfig().getCurrentSystemMessage())
-      filesUploaded.value = []
+      clearUploadedFiles()
     } catch (error) {
       console.error('Failed to start a new chat:', error)
     }
@@ -229,6 +252,7 @@ export function useChats() {
       )
       await updateChatTitle(currentChatId, content)
       await switchChat(currentChatId)
+      await getAllDocumentsUploaded()
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -334,7 +358,7 @@ export function useChats() {
       // messages.value = []
       // ongoingAiMessages.value.clear()
 
-      await startNewChat()
+      await createNewChat()
     } catch (error) {
       console.error('Failed to wipe the database:', error)
     }
@@ -357,15 +381,7 @@ export function useChats() {
         chats.value.splice(chatIndex, 1)
       }
 
-      if (activeChat.value?.deploymentConversationId === deploymentConversationId) {
-        if (chats.value.length > 0) {
-          await switchChat(chats.value[0].deploymentConversationId!)
-        } else {
-          await startNewChat()
-        }
-      }
-
-      // await initialize()
+      await startNewChat()
     } catch (error) {
       console.error(`Failed to delete chat with ID ${deploymentConversationId}:`, error)
     }
@@ -535,6 +551,7 @@ export function useChats() {
     filesUploaded,
     renameChat,
     switchModel,
+    createNewChat,
     startNewChat,
     switchChat,
     deleteChat,

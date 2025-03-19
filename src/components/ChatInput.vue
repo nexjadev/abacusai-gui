@@ -18,6 +18,7 @@ const {
   filesUploaded,
   getOneDocumentUploaded,
   detachDocuments,
+  createNewChat,
 } = useChats()
 
 const { getDocumentDownloadUrl } = useApi()
@@ -34,7 +35,7 @@ const fileUrls = ref<Map<File, string>>(new Map())
 
 const emit = defineEmits(['web-search-toggle'])
 
-const onSubmit = () => {
+const onSubmit = async () => {
   if (isAiResponding.value) {
     abort()
     isAiResponding.value = false
@@ -45,6 +46,9 @@ const onSubmit = () => {
     if (isSystemMessage.value) {
       addSystemMessage(userInput.value.trim())
     } else {
+      if (!activeChat.value?.deploymentConversationId) {
+        await createNewChat()
+      }
       addUserMessage(userInput.value.trim()).then(() => {
         isAiResponding.value = false
       })
@@ -101,7 +105,6 @@ const handleFileSelect = async (event: Event) => {
   if (!input.files) return
 
   const files = Array.from(input.files)
-  const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'text/plain']
   const maxFiles = 5
   const maxFileSize = 10 * 1024 * 1024 // 10MB
 
@@ -111,12 +114,6 @@ const handleFileSelect = async (event: Event) => {
   }
 
   const validFiles = files.filter((file) => {
-    if (!validTypes.includes(file.type)) {
-      alert(
-        `El archivo ${file.name} no es un tipo válido. Solo se permiten PDF, JPG, PNG y archivos de texto.`,
-      )
-      return false
-    }
     if (file.size > maxFileSize) {
       alert(`El archivo ${file.name} excede el tamaño máximo permitido de 10MB`)
       return false
@@ -186,10 +183,10 @@ onUnmounted(() => {
       ref="fileInputRef"
       @change="handleFileSelect"
       multiple
-      accept=".pdf,.jpg,.jpeg,.png,.txt"
+      accept="*"
       class="hidden"
     />
-    <div class="flex flex-col items-center px-2 sm:flex-row">
+    <div class="flex flex-row items-center px-2">
       <div class="attach-menu-container relative">
         <button
           type="button"
@@ -362,7 +359,7 @@ onUnmounted(() => {
         </label>
       </div> -->
     </div>
-    <div class="relative">
+    <div class="relative px-2">
       <textarea
         ref="textarea"
         v-model="userInput"

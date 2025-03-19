@@ -36,16 +36,11 @@ type ChatItem = {
 
 type FlattenedItem = HeaderItem | ChatItem
 
-const { chats, activeChat, switchChat, deleteChat, startNewChat, renameChat, getChats, getAllDocumentsUploaded } = useChats()
+const { chats, activeChat, switchChat, deleteChat, renameChat, getChats, getAllDocumentsUploaded } = useChats()
 
 const editingChatId = ref<string | null>(null)
 const newChatName = ref('')
 const searchTerm = ref('')
-
-const onNewChat = () => {
-  checkSystemPromptPanel()
-  return startNewChat()
-}
 
 const onSwitchChat = async (deploymentConversationId: string) => {
   checkSystemPromptPanel()

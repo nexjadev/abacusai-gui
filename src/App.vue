@@ -16,57 +16,14 @@ import { nextTick, onMounted, ref } from 'vue'
 import { useAI } from './services/useAi.ts'
 import { useChats } from './services/chat.ts'
 import { Conversation } from './services/api.ts'
-// import TextInput from './components/Inputs/TextInput.vue'
-// import Settings from './components/Settings.vue'
 
 const { refreshModels, availableModels } = useAI()
-const { activeChat, renameChat, switchModel, initialize, startNewChat, switchChat, chats } = useChats()
-const isEditingChatName = ref(false)
-const editedChatName = ref('')
-const chatNameInput = ref()
+const { switchModel, initialize, startNewChat } = useChats()
 const isSidebarOpen = ref(true)
-
-const startEditing = () => {
-  isEditingChatName.value = true
-  editedChatName.value = activeChat.value?.name || ''
-  nextTick(() => {
-    if (!chatNameInput.value) return
-    const input = chatNameInput.value.$el.querySelector('input')
-    input.focus()
-    input.select()
-  })
-}
-
-const cancelEditing = () => {
-  isEditingChatName.value = false
-  editedChatName.value = ''
-}
-
-const confirmRename = () => {
-  if (activeChat.value && editedChatName.value) {
-    // renameChat(editedChatName.value)
-    isEditingChatName.value = false
-  }
-}
 
 const onNewChat = () => {
   checkSystemPromptPanel()
-
-  // Buscar un chat vacío del día actual
-  const today = new Date()
-  const emptyChat = chats.value.find((chat: Conversation) => {
-    const chatDate = new Date(chat.createdAt)
-    return chatDate.toDateString() === today.toDateString() &&
-           (!chat.hasHistory)
-  })
-
-  if (emptyChat) {
-    // Si encontramos un chat vacío del día actual, lo seleccionamos
-    return switchChat(emptyChat.deploymentConversationId)
-  }
-
-  // Si no hay chats vacíos del día actual, creamos uno nuevo
-  return startNewChat()
+  startNewChat()
 }
 
 const checkSystemPromptPanel = () => {
@@ -136,31 +93,9 @@ onMounted(() => {
                 class="flex items-center justify-center rounded-lg p-2 text-gray-600 transition hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700"
                 @click="onNewChat"
               >
+                <!-- Icono de nuevo chat -->
                 <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-text-plus"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19 10h-14" /><path d="M5 6h14" /><path d="M14 14h-9" /><path d="M5 18h6" /><path d="M18 15v6" /><path d="M15 18h6" /></svg>
               </button>
-            </div>
-            <div class="mr-auto flex h-full items-center" v-if="activeChat">
-              <div>
-                <div v-if="isEditingChatName">
-                  <!-- <TextInput
-                    id="chat-name"
-                    v-model="editedChatName"
-                    ref="chatNameInput"
-                    @keyup.enter="confirmRename"
-                    @keyup.esc="cancelEditing"
-                    @blur="cancelEditing"
-                  /> -->
-                </div>
-
-                <!-- <button
-                  type="button"
-                  class="block h-full rounded border-none p-2 text-gray-900 decoration-gray-400 decoration-dashed outline-none hover:underline focus:ring-2 focus:ring-blue-600 dark:text-gray-100 dark:focus:ring-blue-600"
-                  v-else
-                  @click.prevent="startEditing"
-                >
-                  {{ activeChat.name }}
-                </button> -->
-              </div>
             </div>
 
             <ModelSelector />

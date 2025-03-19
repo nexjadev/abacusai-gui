@@ -78,7 +78,7 @@ export function useConfig() {
 
   const getImageDictionary = (clave: string) => {
     const dictionary: Record<string, string> = {
-      "afad40be8": "routeLLM.webp",
+      "afad40be8": "routeLLM.png",
       "b733f5c72": "gpt.webp",
       "3a59d8c0": "claude.webp",
       "cdc814e10": "gpt.webp",
@@ -89,6 +89,7 @@ export function useConfig() {
       "f3699e0c2": "gemini.webp",
       "e42560dec": "gemini.webp",
       "10277081d6": "gemini.webp",
+      "aa1cf109c": "gemini.webp",
       "11184722ea": "gpt.webp",
       "1190b27374": "grok.webp",
       "12091dc3fe": "deepseek.webp",
@@ -105,6 +106,22 @@ export function useConfig() {
     return dictionary[clave] ?? ''
   }
 
+  const getNickImageDictionary = (clave: string) => {
+    const dictionary: Record<string, string> = {
+      "routeLLM.webp": "routeLLM.png",
+      "gpt.webp": "gpt.webp",
+      "claude.webp": "claude.webp",
+      "deepseek.webp": "deepseek.webp",
+      "gemini.webp": "gemini.webp",
+      "grok.webp": "grok.webp",
+      "smaug.webp": "smaug.webp",
+      "llama3.webp": "llama3.webp",
+      "qwen.webp": "qwen.webp",
+      "searchLLM.webp": "searchLLM.webp",
+    }
+    return dictionary[clave] ?? 'routeLLM.png'
+  }
+
   const getRoutingDictionary = (clave: string) => {
     const dictionary: Record<string, string> = {
       "OPENAI_GPT4O": "Routing to GPT-4o",
@@ -119,5 +136,6 @@ export function useConfig() {
     historyChatLength,
     getImageDictionary,
     getRoutingDictionary,
+    getNickImageDictionary,
   }
 }
