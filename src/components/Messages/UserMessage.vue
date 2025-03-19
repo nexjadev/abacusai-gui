@@ -57,23 +57,23 @@ const saveEdit = () => {
       </svg>
     </button>
 
-    <div v-if="isEditing" class="w-full sm:w-4/5">
+    <div v-if="isEditing" class="w-full sm:w-4/5 mb-4">
       <textarea
         v-model="editedText"
-        class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800"
         rows="3"
       ></textarea>
       <div class="flex justify-end gap-2 mt-2">
         <button
           @click="cancelEditing"
-          class="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 transition-colors"
+          class="px-3 py-1 rounded dark:text-gray-900  bg-gray-200 hover:bg-gray-300 transition-colors"
         >
           Cancelar
         </button>
         <button
           @click="saveEdit"
           :disabled="!hasTextChanged"
-          class="px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          class="px-3 py-1 rounded bg-blue-500 text-white dark:text-gray-100 hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Guardar
         </button>
@@ -81,7 +81,7 @@ const saveEdit = () => {
     </div>
 
     <div v-else class="w-full sm:w-4/5">
-      <div class="flex justify-end rounded-xl bg-gray-100 my-2 px-2 py-4 sm:px-4 flex flex-row">
+      <div class="flex justify-end rounded-xl bg-gray-100 dark:bg-gray-800 my-2 px-2 py-4 sm:px-4 flex flex-row">
         <div class="flex items-center justify-center max-w-3xl">
           <code v-if="!enableMarkdown" class="whitespace-pre-line text-gray-900 dark:text-gray-100">
             {{ message.text }}

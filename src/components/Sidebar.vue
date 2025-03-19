@@ -286,16 +286,12 @@ const onScroll = async (event: Event) => {
         </div>
         <div class="flex items-center justify-between px-2 py-1">
           <div class="flex items-center space-x-2">
-            <button class="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800">
-              <svg class="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 18.5C15.5899 18.5 18.5 15.5899 18.5 12C18.5 8.41015 15.5899 5.5 12 5.5C8.41015 5.5 5.5 8.41015 5.5 12C5.5 15.5899 8.41015 18.5 12 18.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M19.14 19.14L19.01 19.01M19.01 4.99L19.14 4.86L19.01 4.99ZM4.86 19.14L4.99 19.01L4.86 19.14ZM12 2.08V2V2.08ZM12 22V21.92V22ZM2.08 12H2H2.08ZM22 12H21.92H22ZM4.99 4.99L4.86 4.86L4.99 4.99Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
-            <button class="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800">
-              <svg class="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17 12C17 14.7614 14.7614 17 12 17C9.23858 17 7 14.7614 7 12C7 9.23858 9.23858 7 12 7C14.7614 7 17 9.23858 17 12Z" fill="currentColor"/>
-              </svg>
+            <button
+              class="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+              @click="isDarkMode = !isDarkMode"
+            >
+              <IconSun v-if="isDarkMode" class="h-5 w-5 text-gray-600 dark:text-gray-300" />
+              <IconMoon v-else class="h-5 w-5 text-gray-600 dark:text-gray-300" />
             </button>
             <button class="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800">
               <svg class="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -303,9 +299,7 @@ const onScroll = async (event: Event) => {
               </svg>
             </button>
           </div>
-          <div class="flex items-center">
-            <span class="text-xs font-medium text-blue-600 dark:text-blue-400">NEW</span>
-          </div>
+
         </div>
       </div>
     </div>

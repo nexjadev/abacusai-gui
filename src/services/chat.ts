@@ -33,6 +33,7 @@ const systemPrompt = ref<History>()
 const ongoingAiMessages = ref<Map<string, History>>(new Map())
 const TITLE_CONVERSATION = 'New Chat'
 const documentsUploaded = ref<DocumentFile[]>([])
+const filesUploaded = ref<DocumentFile[]>([])
 
 // Función auxiliar para determinar si un mensaje es editable
 const isMessageEditable = (message: History): boolean => {
@@ -126,6 +127,7 @@ export function useChats() {
         if (!chatExists) {
           chats.value.unshift(chat)
         }
+        filesUploaded.value = []
       }
     } catch (error) {
       console.error(`Failed to switch to chat with ID ${currentModelId.value}:`, error)
@@ -175,6 +177,7 @@ export function useChats() {
       const newConversation = await createConversation(newChat)
       setActiveChat(newConversation)
       await addSystemMessage(await useConfig().getCurrentSystemMessage())
+      filesUploaded.value = []
     } catch (error) {
       console.error('Failed to start a new chat:', error)
     }
@@ -529,6 +532,7 @@ export function useChats() {
     hasMessages,
     hasActiveChat,
     documentsUploaded,
+    filesUploaded,
     renameChat,
     switchModel,
     startNewChat,

@@ -15,6 +15,7 @@ const {
   uploadDataChat,
   activeChat,
   activeModel,
+  filesUploaded,
   getOneDocumentUploaded,
   detachDocuments,
 } = useChats()
@@ -30,7 +31,6 @@ const isWebSearchActive = ref(false)
 const selectedFiles = ref<File[]>([])
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const fileUrls = ref<Map<File, string>>(new Map())
-const filesUploaded = ref<DocumentFile[]>([])
 
 const emit = defineEmits(['web-search-toggle'])
 
@@ -141,9 +141,7 @@ const handleFileSelect = async (event: Event) => {
         activeChat.value?.deploymentConversationId ?? '',
         file,
       )
-      console.log('response -> ', response)
       const document = await getOneDocumentUploaded(response.request_id)
-      console.log('document -> ', document)
       if (document) {
         filesUploaded.value.push(document)
       }
@@ -201,20 +199,18 @@ onUnmounted(() => {
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
+            width="22"
+            height="22"
+            viewBox="0 0 22 22"
             fill="none"
             stroke="currentColor"
-            stroke-width="2"
+            stroke-width="1"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="icon icon-tabler icons-tabler-outline icon-tabler-paperclip"
+            class="icon icon-tabler icons-tabler-outline icon-tabler-paperclip text-gray-900 dark:text-gray-100"
           >
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <path
-              d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5"
-            />
+            <path d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5"/>
           </svg>
         </button>
 
@@ -238,9 +234,9 @@ onUnmounted(() => {
               class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
             >
               <svg
-                class="mr-2 h-5 w-5"
+                class="mr-2 h-5 w-5 text-gray-900 dark:text-gray-100"
                 xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
+                viewBox="0 0 22 22"
                 fill="none"
                 stroke="currentColor"
               >
@@ -278,7 +274,7 @@ onUnmounted(() => {
           stroke-width="2"
           stroke-linecap="round"
           stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-world-www"
+          class="icon icon-tabler icons-tabler-outline icon-tabler-world-www text-gray-900 dark:text-gray-100"
         >
           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
           <path d="M19.5 7a9 9 0 0 0 -7.5 -4a8.991 8.991 0 0 0 -7.484 4" />
@@ -352,7 +348,7 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
-      <div
+      <!-- <div
         class="mb-2 space-x-2 text-sm font-medium text-gray-900 dark:text-gray-100"
         v-if="showSystem"
       >
@@ -364,7 +360,7 @@ onUnmounted(() => {
           <input type="radio" :value="true" v-model="isSystemMessage" />
           System
         </label>
-      </div>
+      </div> -->
     </div>
     <div class="relative">
       <textarea

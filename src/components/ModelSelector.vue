@@ -107,8 +107,8 @@ const { disabled = false } = defineProps<Props>()
             :class="[
               'px-4 py-2 text-sm font-medium',
               activeTab === tab.id
-                ? 'border-b-2 border-purple-500 text-purple-600'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'border-b-2 border-purple-500 text-purple-600 dark:text-gray-100'
+                : 'text-gray-500 hover:text-gray-700 dark:text-gray-100'
             ]"
           >
             {{ tab.name }}
