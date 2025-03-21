@@ -80,7 +80,7 @@ const saveEdit = () => {
       </div>
     </div>
 
-    <div v-else class="w-full sm:w-4/5">
+    <div v-else class="">
       <div class="flex justify-end rounded-xl bg-gray-100 dark:bg-gray-800 my-2 px-2 py-4 sm:px-4 flex flex-row">
         <div class="flex items-center justify-center max-w-3xl">
           <code v-if="!enableMarkdown" class="whitespace-pre-line text-gray-900 dark:text-gray-100">
