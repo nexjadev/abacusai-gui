@@ -60,6 +60,7 @@ export const getAuthToken = (): string | null => {
 export const refreshAuthToken = async (): Promise<string> => {
   try {
     const currentRefreshToken = getRefreshToken()
+    const currentAccessToken = getAuthToken()
     if (!currentRefreshToken) {
       throw new Error('No refresh token available')
     }
@@ -69,7 +70,7 @@ export const refreshAuthToken = async (): Promise<string> => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ refresh_token: currentRefreshToken }),
+      body: JSON.stringify({ access_token: currentAccessToken, refresh_token: currentRefreshToken }),
     })
 
     if (!response.ok) {
