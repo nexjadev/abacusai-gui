@@ -1,4 +1,6 @@
 import { ref } from 'vue'
+import { getApiUrl } from './appConfig';
+import { getAuthHeaders, getAuthToken, handleTokenExpired } from './auth';
 
 export type SSESegment = {
   type: string;
@@ -247,22 +249,42 @@ export type ListFilesResponse = {
 // Tipo unión para manejar cualquier tipo de mensaje
 export type StreamMessage = ChatResponseSegment | ChatFinalResponse;
 
-// Define a method to get the full API URL for a given path
-const getApiUrl = (path: string) =>
-  `${'http://3.21.99.235:8000'}${path}`
-
 const abortController = ref<AbortController>(new AbortController())
 const signal = ref<AbortSignal>(abortController.value.signal)
+
+// Función para hacer una petición con manejo de token expirado
+const fetchWithTokenRefresh = async (url: string, options: RequestInit): Promise<Response> => {
+  try {
+    const response = await fetch(url, options)
+
+    if (response.status === 401) {
+      // Token expirado, intentar refrescar
+      const newToken = await handleTokenExpired()
+
+      // Reintentar la petición con el nuevo token
+      const newHeaders = new Headers(options.headers)
+      newHeaders.set('Authorization', `Bearer ${newToken}`)
+
+      return fetch(url, {
+        ...options,
+        headers: newHeaders
+      })
+    }
+
+    return response
+  } catch (error) {
+    throw error
+  }
+}
+
 // Define the API client functions
 export const useApi = () => {
   const error = ref(null)
 
   const generateChat = async (request: MessageChatRequest, onDataReceived: (data: any) => void): Promise<any[]> => {
-    const res = await fetch(getApiUrl('/conversations/send-message-sse'), {
+    const res = await fetchWithTokenRefresh(getApiUrl('/conversations/send-message-sse'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
       signal: signal.value,
     })
@@ -304,15 +326,11 @@ export const useApi = () => {
     return results
   }
 
-  // Create a model
-
   // List local models
   const listLocalModels = async (): Promise<ExternalApplication[]> => {
-    const response = await fetch(getApiUrl('/applications/list'), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/applications/list'), {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     })
     const listLocalModels: AbacusResponse<ExternalApplication> = await response.json()
     if (!listLocalModels.success) {
@@ -344,11 +362,9 @@ export const useApi = () => {
       deploymentId,
       limit
     });
-    const response = await fetch(getApiUrl('/conversations/list?' + queryParams.toString()), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/list?' + queryParams.toString()), {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      }
+      headers: getAuthHeaders()
     })
     const allChats: AbacusResponse<Conversation> = await response.json()
     if (!allChats.success) {
@@ -364,11 +380,9 @@ export const useApi = () => {
       skipDocumentBoundingBoxes: "true",
       filterIntermediateConversationEvents: "true",
     });
-    const response = await fetch(getApiUrl('/conversations/one?' + queryParams.toString()), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/one?' + queryParams.toString()), {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      }
+      headers: getAuthHeaders()
     })
     const chat: AbacusResponse<Conversation> = await response.json()
     if (!chat.success) {
@@ -379,11 +393,9 @@ export const useApi = () => {
 
   // createConversation
   const createConversation = async (request: CreateConversationRequest): Promise<Conversation> => {
-    const response = await fetch(getApiUrl('/conversations'), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })
     const response_request: AbacusResponse<Conversation> = await response.json()
@@ -395,11 +407,9 @@ export const useApi = () => {
 
   // titleConversation
   const titleConversation = async (request: TitleConversationRequest): Promise<TitleConversationResponse> => {
-    const response = await fetch(getApiUrl('/conversations/title'), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/title'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })
     const response_request: AbacusResponse<TitleConversationResponse> = await response.json()
@@ -411,11 +421,9 @@ export const useApi = () => {
 
   // Delete a Conversation
   const deleteConversation = async (request: DeleteConversationRequest): Promise<void> => {
-    const response = await fetch(getApiUrl('/conversations/delete'), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/delete'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })
     const response_request: AbacusResponse<null> = await response.json()
@@ -426,11 +434,9 @@ export const useApi = () => {
 
   // Rename a Conversation
   const renameConversation = async (request: RenameConversationRequest): Promise<void> => {
-    const response = await fetch(getApiUrl('/conversations/rename'), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/rename'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })
     const response_request: AbacusResponse<null> = await response.json()
@@ -441,8 +447,12 @@ export const useApi = () => {
 
   // Upload a file to a Conversation
   const uploadDataConversation = async (formData: FormData): Promise<UploadDataConversationResponse> => {
-    const response = await fetch(getApiUrl('/conversations/upload-data'), {
+    const headers = getAuthHeaders()
+    headers.delete('Content-Type');
+
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/upload-data'), {
       method: 'POST',
+      headers,
       body: formData,
     })
     const response_request: UploadDataConversationResponse = await response.json()
@@ -451,11 +461,9 @@ export const useApi = () => {
 
   // Obtener lista de archivos de una conversación
   const getAllDocuments = async (deploymentConversationId: string): Promise<ListFilesResponse> => {
-    const response = await fetch(getApiUrl('/conversations/files'), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/files'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ deploymentConversationId }),
     })
     const response_request: AbacusResponse<ListFilesResponse> = await response.json()
@@ -464,11 +472,9 @@ export const useApi = () => {
 
   // Obtener el archivo de una conversación
   const getOneDocument = async (requestId: string): Promise<ListFilesResponse> => {
-    const response = await fetch(getApiUrl('/conversations/upload-status/' + requestId), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/upload-status/' + requestId), {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     })
     const response_request: any = await response.json()
     if (response_request.status == 'SUCCESS') {
@@ -480,11 +486,9 @@ export const useApi = () => {
 
   // desvincular documentos de una conversación
   const detachDocumentsConversation = async (request: DetachDocumentsRequest): Promise<ListFilesResponse> => {
-    const response = await fetch(getApiUrl('/conversations/detach/documents'), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/detach/documents'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })
     const response_request: AbacusResponse<ListFilesResponse> = await response.json()

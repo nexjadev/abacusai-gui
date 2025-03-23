@@ -22,6 +22,9 @@ export const toggleSettingsPanel = () => (isSettingsOpen.value = !isSettingsOpen
 export const toggleSystemPromptPanel = () => (isSystemPromptOpen.value = !isSystemPromptOpen.value)
 const imageDictionary = ref()
 
+// Define a method to get the full API URL for a given path
+export const getApiUrl = (path: string) => `${baseUrl.value}${path}`
+
 // Database Layer
 export const configDbLayer = {
   async getConfig(deploymentId: string) {

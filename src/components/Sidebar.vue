@@ -10,6 +10,7 @@ import {
   IconPencil,
   IconCheck,
   IconX,
+  IconLogout,
 } from '@tabler/icons-vue'
 
 import {
@@ -22,6 +23,7 @@ import { useChats } from '../services/chat.ts'
 import { Conversation } from '../services/api.ts'
 import { computed, ref, onMounted } from 'vue'
 import { useInfiniteScroll } from '../composables/useInfiniteScroll'
+import { useAuth } from '../services/auth.ts'
 
 // Definir tipos para los elementos de la lista plana
 type HeaderItem = {
@@ -37,6 +39,7 @@ type ChatItem = {
 type FlattenedItem = HeaderItem | ChatItem
 
 const { chats, activeChat, switchChat, deleteChat, renameChat, getChats, getAllDocumentsUploaded } = useChats()
+const { logout } = useAuth()
 
 const editingChatId = ref<string | null>(null)
 const newChatName = ref('')
@@ -50,6 +53,12 @@ const onSwitchChat = async (deploymentConversationId: string) => {
 
 const checkSystemPromptPanel = () => {
   isSystemPromptOpen.value = false
+}
+
+const handleLogout = () => {
+  logout()
+  // Redirigir al usuario a la página de login o recargar la aplicación
+  window.location.href = '/'
 }
 
 const lang = navigator.language
@@ -288,13 +297,16 @@ const onScroll = async (event: Event) => {
               <IconSun v-if="isDarkMode" class="h-5 w-5 text-gray-600 dark:text-gray-300" />
               <IconMoon v-else class="h-5 w-5 text-gray-600 dark:text-gray-300" />
             </button>
-            <button class="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800">
-              <svg class="h-5 w-5 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M8 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V5C19 3.89543 18.1046 3 17 3H16M8 3V5H16V3M8 3H16M10 11L12 13M12 13L14 11M12 13V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-            </button>
           </div>
 
+          <!-- botón logout -->
+          <button
+            class="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+            @click="handleLogout"
+            title="Cerrar sesión"
+          >
+            <IconLogout class="h-5 w-5 text-gray-600 dark:text-gray-300" />
+          </button>
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ import ChatMessages from './components/ChatMessages.vue'
 import Login from './components/Login.vue'
 // import SystemPrompt from './components/SystemPrompt.vue'
 import ModelSelector from './components/ModelSelector.vue'
+
 import {
   currentExtAppId,
   currentModelId,
@@ -17,11 +18,12 @@ import { nextTick, onMounted, ref } from 'vue'
 import { useAI } from './services/useAi.ts'
 import { useChats } from './services/chat.ts'
 import { Conversation } from './services/api.ts'
+import { useAuth } from './services/auth.ts'
 
-const isAuthenticated = ref(false)
 const { refreshModels, availableModels } = useAI()
 const { switchModel, initialize, startNewChat } = useChats()
 const isSidebarOpen = ref(true)
+const { isAuthenticated } = useAuth()
 
 const onNewChat = () => {
   checkSystemPromptPanel()
@@ -32,16 +34,33 @@ const checkSystemPromptPanel = () => {
   isSystemPromptOpen.value = false
 }
 
+const initializeApp = async () => {
+  try {
+    await refreshModels()
+    if (currentModelId.value && currentExtAppId.value) {
+      await switchModel(currentModelId.value, currentExtAppId.value)
+    } else if (availableModels.value && availableModels.value.length > 0) {
+      await switchModel(availableModels.value[0].deploymentId, availableModels.value[0].externalApplicationId)
+    } else {
+      console.error('No hay modelos disponibles para inicializar la aplicación')
+    }
+    await initialize()
+  } catch (error) {
+    console.error('Error al inicializar la aplicación:', error)
+  }
+}
+
+const onLoginSuccess = () => {
+  isAuthenticated.value = true
+  // Asegurarnos de que la inicialización comience después de que se actualice isAuthenticated
+  nextTick(async () => {
+    await initializeApp()
+  })
+}
+
 onMounted(() => {
   if (isAuthenticated.value) {
-    refreshModels().then(async () => {
-      if (currentModelId.value && currentExtAppId.value) {
-        await switchModel(currentModelId.value, currentExtAppId.value)
-      } else {
-        await switchModel(availableModels.value[0].deploymentId, availableModels.value[0].externalApplicationId)
-      }
-      await initialize()
-    })
+    initializeApp()
   }
 })
 </script>
@@ -51,7 +70,7 @@ onMounted(() => {
     <main
       class="flex h-full w-full flex-1 flex-row items-stretch bg-white dark:bg-gray-900"
     >
-      <Login v-if="!isAuthenticated" @login-success="isAuthenticated = true" />
+      <Login v-if="!isAuthenticated" @login-success="onLoginSuccess" />
 
       <template v-else>
         <transition name="slide-sidebar">
@@ -113,9 +132,9 @@ onMounted(() => {
           </div>
         </div>
 
-        <transition name="slide">
+        <!-- <transition name="slide">
           <Settings v-if="isSettingsOpen" />
-        </transition>
+        </transition> -->
       </template>
     </main>
   </div>

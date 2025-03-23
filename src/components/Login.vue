@@ -79,8 +79,8 @@ const emit = defineEmits<{
 
 const { login } = useAuth()
 
-const username = ref('')
-const password = ref('')
+const username = ref('Germaine.Powlowski54')
+const password = ref('123456')
 const rememberMe = ref(false)
 const isLoading = ref(false)
 const errors = reactive({
