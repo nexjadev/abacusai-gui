@@ -39,20 +39,22 @@ const isLastBotMessage = computed(() => {
       <div v-for="(content, index) in message.segments" :key="index">
         <!-- Contenido colapsable -->
         <details v-if="content.type === 'collapsible_component' && typeof content.segment === 'object' && (content.segment.title || content.segment.segment)"
-          class="whitespace-pre-wrap underline-on-hover rounded-md mb-4 border border-blue-200 bg-blue-50 p-4 text-sm leading-tight text-blue-900 dark:border-blue-700 dark:bg-blue-800 dark:text-blue-50"
+          class="whitespace-pre-wrap !mb-1 p-0 text-sm leading-tight text-blue-900 dark:border-blue-700 dark:bg-blue-800 dark:text-blue-50"
           :open="!content.isCollapsed">
           <summary class="cursor-pointer">
             {{ content.title }}
           </summary>
-          <template v-if="content.segment.type === 'text'">
-            {{ content.segment.segment }}
-          </template>
-          <template v-else-if="content.segment.type === 'list' && Array.isArray(content.segment.segment)">
-            <Markdown :source="content.segment.segment.join('\n')" />
-          </template>
-          <template v-else>
-            <Markdown :source="content.segment.segment" />
-          </template>
+          <div class="pl-4 mb-2">
+            <template v-if="content.segment.type === 'text'">
+              {{ content.segment.segment }}
+            </template>
+            <template v-else-if="content.segment.type === 'list' && Array.isArray(content.segment.segment)">
+              <Markdown :source="content.segment.segment.join('\n')" />
+            </template>
+            <template v-else>
+              <Markdown :source="content.segment.segment" />
+            </template>
+          </div>
         </details>
 
         <!-- Contenido normal -->

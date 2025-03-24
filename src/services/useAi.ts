@@ -1,7 +1,5 @@
 import { ref } from 'vue'
 import { ChatFinalResponse, ChatResponseSegment, ExternalApplication, MessageChatRequest, StreamMessage, useApi } from './api'
-import { currentModelId } from './appConfig'
-import { History, SSEChatPartResponse, SSESegment } from './api'
 
 const availableModels = ref<ExternalApplication[]>([])
 

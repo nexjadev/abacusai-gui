@@ -451,37 +451,37 @@ export function useChats() {
       text: '',
       modelVersion: '',
     }
-    const collapsibleComponent: ChatResponseSegment = {
-      type: 'collapsible_component',
-      title: '',
-      counter: 0,
-      segment: {
-        temp: false,
-        type: 'text',
-        title: '',
-        segment: '',
-        // isSpinny: false,
-        // messageId: null,
-        // isGeneratingImage: false,
-        message_id: '',
-        id: '',
-        is_spinny: false,
-        is_generating_image: false,
-      },
-      isSpinny: true,
-      isRouting: false,
-      messageId: '',
-      isCollapsed: false,
-      isComplexSegment: true,
-    }
-    message.segments.push(collapsibleComponent)
-    const textSegment: ChatResponseSegment = {
-      type: 'text',
-      segment: '',
-      messageId: '',
-      counter: 0,
-    }
-    message.segments.push(textSegment)
+    // const collapsibleComponent: ChatResponseSegment = {
+    //   type: 'collapsible_component',
+    //   title: '',
+    //   counter: 0,
+    //   segment: {
+    //     temp: false,
+    //     type: 'text',
+    //     title: '',
+    //     segment: '',
+    //     // isSpinny: false,
+    //     // messageId: null,
+    //     // isGeneratingImage: false,
+    //     message_id: '',
+    //     id: '',
+    //     is_spinny: false,
+    //     is_generating_image: false,
+    //   },
+    //   isSpinny: true,
+    //   isRouting: false,
+    //   messageId: '',
+    //   isCollapsed: false,
+    //   isComplexSegment: true,
+    // }
+    // message.segments.push(collapsibleComponent)
+    // const textSegment: ChatResponseSegment = {
+    //   type: 'text',
+    //   segment: '',
+    //   messageId: '',
+    //   counter: 0,
+    // }
+    // message.segments.push(textSegment)
 
     try {
       ongoingAiMessages.value.set(currentChatId, message)
@@ -521,19 +521,49 @@ export function useChats() {
     const aiMessage = ongoingAiMessages.value.get(currentChatId)
     if (aiMessage) {
       try {
-        const collapsibleSegment = aiMessage.segments.find(
-          (segment) => segment.type === 'collapsible_component',
-        )
-        if (collapsibleSegment?.type === data.type) {
-          Object.assign(collapsibleSegment, data)
-        }
-
-        const textSegment = aiMessage.segments.find((segment) => segment.type === 'text')
-        if (textSegment) {
-          if (typeof textSegment.segment === 'string' && typeof data.segment === 'string') {
+        if (data.type === 'collapsible_component') {
+          const collapsibleComponent: ChatResponseSegment = {
+            type: 'collapsible_component',
+            isSpinny: data.isSpinny,
+            // external: data.external,
+            segment: data.segment,
+            title: data.title,
+            isComplexSegment: data.isComplexSegment,
+            isCollapsed: data.isCollapsed,
+            isRouting: data.isRouting,
+            counter: data.counter,
+            message_id: data.message_id,
+            messageId: data.messageId,
+          }
+          aiMessage.segments.push(collapsibleComponent)
+        } else if (data.type === 'text' && data.temp == true) {
+            const textSegment: ChatResponseSegment = {
+              type: 'text',
+              temp: data.temp,
+              isSpinny: data.isSpinny,
+              segment: data.segment,
+              title: data.title,
+              isGeneratingImage: data.isGeneratingImage,
+              counter: data.counter,
+              message_id: data.message_id,
+              messageId: data.messageId
+            }
+            aiMessage.segments.push(textSegment)
+        } else if (data.type === 'text') {
+          const textSegment = aiMessage.segments.find((segment) => segment.type === 'text' && !segment.temp && segment.counter)
+          if (textSegment && typeof textSegment.segment === 'string') {
             textSegment.segment = textSegment.segment + data.segment
             textSegment.messageId = data.messageId
             textSegment.counter = data.counter
+          } else {
+            const textSegment: ChatResponseSegment = {
+              type: 'text',
+              segment: data.segment,
+              counter: data.counter,
+              message_id: data.message_id,
+              messageId: data.messageId
+            }
+            aiMessage.segments.push(textSegment)
           }
         }
       } catch (error) {

@@ -24,6 +24,7 @@ import { Conversation } from '../services/api.ts'
 import { computed, ref, onMounted } from 'vue'
 import { useInfiniteScroll } from '../composables/useInfiniteScroll'
 import { useAuth } from '../services/auth.ts'
+import AlertDialog from './AlertDialog.vue'
 
 // Definir tipos para los elementos de la lista plana
 type HeaderItem = {
@@ -44,6 +45,9 @@ const { logout } = useAuth()
 const editingChatId = ref<string | null>(null)
 const newChatName = ref('')
 const searchTerm = ref('')
+
+const showDeleteAlert = ref(false)
+const chatToDelete = ref<{ deploymentId: string; deploymentConversationId: string } | null>(null)
 
 const onSwitchChat = async (deploymentConversationId: string) => {
   checkSystemPromptPanel()
@@ -202,6 +206,18 @@ const onScroll = async (event: Event) => {
   })
 }
 
+const handleDeleteClick = (deploymentId: string, deploymentConversationId: string) => {
+  chatToDelete.value = { deploymentId, deploymentConversationId }
+  showDeleteAlert.value = true
+}
+
+const handleDeleteConfirm = () => {
+  if (chatToDelete.value) {
+    deleteChat(chatToDelete.value.deploymentId, chatToDelete.value.deploymentConversationId)
+    chatToDelete.value = null
+  }
+}
+
 </script>
 
 <template>
@@ -274,7 +290,7 @@ const onScroll = async (event: Event) => {
                   <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="startEditing((item as ChatItem).chat.deploymentConversationId!, (item as ChatItem).chat.name)">
                     <IconPencil class="h-4 w-4" />
                   </button>
-                  <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="deleteChat((item as ChatItem).chat.deploymentId!, (item as ChatItem).chat.deploymentConversationId!)">
+                  <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="handleDeleteClick((item as ChatItem).chat.deploymentId!, (item as ChatItem).chat.deploymentConversationId!)">
                     <IconTrashX class="h-4 w-4" />
                   </button>
                 </template>
@@ -310,6 +326,15 @@ const onScroll = async (event: Event) => {
         </div>
       </div>
     </div>
+    <AlertDialog
+      :is-open="showDeleteAlert"
+      title="Eliminar chat"
+      message="¿Estás seguro de que deseas eliminar este chat? Esta acción no se puede deshacer."
+      confirm-text="Eliminar"
+      cancel-text="Cancelar"
+      @confirm="handleDeleteConfirm"
+      @close="showDeleteAlert = false"
+    />
   </aside>
 </template>
 

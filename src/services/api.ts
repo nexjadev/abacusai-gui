@@ -2,28 +2,6 @@ import { ref } from 'vue'
 import { getApiUrl } from './appConfig';
 import { getAuthHeaders, getAuthToken, handleTokenExpired } from './auth';
 
-export type SSESegment = {
-  type: string;
-  segment?: string;
-  temp?: boolean;
-  is_spinny?: boolean;
-  title?: string | null;
-  is_generating_image?: boolean;
-  message_id?: string | null;
-}
-
-export type SSEChatPartResponse = {
-  type: string;
-  isSpinny?: boolean;
-  segment?: SSESegment;
-  title?: string;
-  isComplexSegment?: boolean;
-  isCollapsed?: boolean;
-  isRouting?: boolean;
-  counter: number;
-  message_id: string;
-  messageId: string;
-}
 
 export type ExternalApplication = {
   name: string;
@@ -202,7 +180,7 @@ export type ChatResponseSegment = {
   type: string;
   temp?: boolean;
   isSpinny?: boolean;
-  segment?: string | ChatResponseSubSegment;
+  segment: string | ChatResponseSubSegment;
   title?: string;
   isGeneratingImage?: boolean;
   messageId: string;
@@ -277,6 +255,21 @@ const fetchWithTokenRefresh = async (url: string, options: RequestInit): Promise
   }
 }
 
+function extractData(text: string) {
+  // Expresión regular que busca texto que comience con 'data: ' y termine en '}\n\n'
+  const regex = /data: (.*?})\n\n/g;
+  const results = [];
+
+  // Encuentra todas las coincidencias
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+      // Agrega solo el grupo capturado (sin 'data: ' y sin '\n\n')
+      results.push(match[1]);
+  }
+
+  return results;
+}
+
 // Define the API client functions
 export const useApi = () => {
   const error = ref(null)
@@ -305,7 +298,7 @@ export const useApi = () => {
 
         try {
           const chunk = new TextDecoder('utf-8').decode(value)
-          const parts = chunk.split('\n').filter(part => part.trim().startsWith('data: ')).map(part => part.slice(6));
+          const parts = extractData(chunk);
 
           for (const part of parts) {
             try {
