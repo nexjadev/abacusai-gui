@@ -22,7 +22,6 @@ import {
   TitleConversationRequest,
   UploadDataConversationResponse,
   useApi,
-  getOneDocument,
 } from './api.ts'
 
 const chats = ref<Conversation[]>([])
@@ -459,11 +458,15 @@ export function useChats() {
       segment: {
         temp: false,
         type: 'text',
-        title: null,
+        title: '',
         segment: '',
-        isSpinny: false,
-        messageId: null,
-        isGeneratingImage: false,
+        // isSpinny: false,
+        // messageId: null,
+        // isGeneratingImage: false,
+        message_id: '',
+        id: '',
+        is_spinny: false,
+        is_generating_image: false,
       },
       isSpinny: true,
       isRouting: false,
@@ -526,10 +529,12 @@ export function useChats() {
         }
 
         const textSegment = aiMessage.segments.find((segment) => segment.type === 'text')
-        if (textSegment?.type === data.type) {
-          textSegment.segment += data.segment
-          textSegment.messageId = data.messageId
-          textSegment.counter = data.counter
+        if (textSegment?.type === data.type && textSegment.segment && data.segment) {
+          if (typeof textSegment.segment === 'string' && typeof data.segment === 'string') {
+            textSegment.segment = textSegment.segment + data.segment
+            textSegment.messageId = data.messageId
+            textSegment.counter = data.counter
+          }
         }
       } catch (error) {
         console.error('Failed to append to AI message:', error)

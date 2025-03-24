@@ -1,21 +1,14 @@
-# Build stage
-FROM node:20-alpine as build-stage
-WORKDIR /app
+# Imagen base
+FROM nginx:stable-alpine
 
-# Copy package.json and yarn.lock to install dependencies
-COPY package.json ./
-COPY yarn.lock ./
+# Copiar la configuración de nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN yarn install
+# Copiar los archivos compilados
+COPY dist /usr/share/nginx/html
 
-# Copy the rest of the files
-COPY . .
+# Exponer el puerto 80
+EXPOSE 80
 
-# Build the app
-RUN yarn run build
-
-# Production stage
-FROM nginx:stable-alpine as production-stage
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-EXPOSE 8080
+# Iniciar nginx
 CMD ["nginx", "-g", "daemon off;"]

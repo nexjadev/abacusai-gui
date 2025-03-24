@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SystemMessage from './Messages/SystemMessage.vue'
+// import SystemMessage from './Messages/SystemMessage.vue'
 import UserMessage from './Messages/UserMessage.vue'
 import AiMessage from './Messages/AiMessage.vue'
 import { History } from '../services/api.ts'
