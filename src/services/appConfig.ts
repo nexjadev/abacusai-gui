@@ -14,7 +14,7 @@ export const avatarUrl = computed(() => gravatarEmail.value
 )
 export const enableMarkdown = useLocalStorage('markdown', true)
 export const showSystem = useLocalStorage('systemMessages', true)
-export const baseUrl = useLocalStorage('baseUrl', 'http://3.21.99.235:8000')
+export const baseUrl = useLocalStorage('baseUrl', 'https://multimindai.lat/api')
 export const isDarkMode = useLocalStorage('darkMode', false)
 export const isSettingsOpen = useLocalStorage('settingsPanelOpen', true)
 export const isSystemPromptOpen = useLocalStorage('systemPromptOpen', false)
