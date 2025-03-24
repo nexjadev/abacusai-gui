@@ -529,7 +529,7 @@ export function useChats() {
         }
 
         const textSegment = aiMessage.segments.find((segment) => segment.type === 'text')
-        if (textSegment?.type === data.type && textSegment.segment && data.segment) {
+        if (textSegment) {
           if (typeof textSegment.segment === 'string' && typeof data.segment === 'string') {
             textSegment.segment = textSegment.segment + data.segment
             textSegment.messageId = data.messageId

@@ -305,7 +305,7 @@ export const useApi = () => {
 
         try {
           const chunk = new TextDecoder('utf-8').decode(value)
-          const parts = chunk.split('\n').filter(part => part.trim() !== '');
+          const parts = chunk.split('\n').filter(part => part.trim().startsWith('data: ')).map(part => part.slice(6));
 
           for (const part of parts) {
             try {
@@ -313,7 +313,10 @@ export const useApi = () => {
               onDataReceived(parsedChunk);
               results.push(parsedChunk);
             } catch (e) {
-              console.log('Error al parsear parte del chunk -> ', e, 'parte -> ', part);
+              console.error('Error al parsear parte del chunk');
+              console.error('exception -> ', e)
+              console.error('chunk -> ', chunk)
+              console.error('')
             }
           }
         } catch (e) {
