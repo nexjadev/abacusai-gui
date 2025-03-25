@@ -8,19 +8,19 @@
 npm run build
 
 # Construir la imagen
-docker build -t multimindai-gui:v1.9 .
+docker build -t multimindai-gui:v1.10 .
 
 # Etiquetar la imagen
-docker tag multimindai-gui:v1.9 javiervq/multimindaigui:v1.9
+docker tag multimindai-gui:v1.10 javiervq/multimindaigui:v1.10
 
 # Publicar la imagen en Docker Hub
-docker push javiervq/multimindaigui:v1.9
+docker push javiervq/multimindaigui:v1.10
 ```
 
 ### Desplegar en el Servidor
 ```bash
 # Obtener la última versión de la imagen
-docker pull javiervq/multimindaigui:v1.9
+docker pull javiervq/multimindaigui:v1.10
 
 # Detener y eliminar el contenedor existente
 docker stop contenedor-gui
@@ -33,13 +33,13 @@ docker run -d \
   --name contenedor-gui \
   --network mi_red \
   -v /etc/letsencrypt:/etc/letsencrypt:ro \
-  javiervq/multimindaigui:v1.9
+  javiervq/multimindaigui:v1.10
 ```
 
 ### Comandos de Mantenimiento
 ```bash
 # Eliminar una imagen
-docker rmi javiervq/multimindaigui:v1.9
+docker rmi javiervq/multimindaigui:v1.10
 
 # Ver logs del contenedor
 docker logs contenedor-gui

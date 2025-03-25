@@ -27,9 +27,6 @@ const encryptData = (data: string): string => {
   // Combinar todos los componentes
   const encrypted = forge.util.encode64(salt + iv + cipher.output.getBytes() + tag.getBytes())
 
-  // Para debug
-  console.log('Datos originales:', data)
-  console.log('Datos encriptados:', encrypted)
   return encrypted
 }
 
