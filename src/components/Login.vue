@@ -79,8 +79,8 @@ const emit = defineEmits<{
 
 const { login } = useAuth()
 
-const username = ref('Germaine.Powlowski54')
-const password = ref('123456')
+const username = ref('')
+const password = ref('')
 const rememberMe = ref(false)
 const isLoading = ref(false)
 const errors = reactive({
@@ -122,7 +122,7 @@ const handleLogin = async () => {
     if (success) {
       emit('login-success')
     } else {
-      errors.general = 'Credenciales inválidas'
+      errors.general = 'Ocurrió un error o las credenciales son inválidas'
     }
   } catch (error) {
     errors.general = 'Error al intentar iniciar sesión'

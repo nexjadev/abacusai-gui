@@ -13,7 +13,6 @@ export function useNotification() {
   const showError = (message: string, title?: string) => {
     toast.error(title ? `${title}\n${message}` : message, {
       timeout: 8000, // más tiempo para errores
-      icon: '❌'
     })
   }
 

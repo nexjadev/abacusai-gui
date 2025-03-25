@@ -1,6 +1,72 @@
 import { ref } from 'vue'
 import { getApiUrl } from './appConfig'
 import { useNotification } from './notification'
+import * as forge from 'node-forge'
+
+// Clave secreta para encriptación (en producción debería estar en variables de entorno)
+const ENCRYPTION_KEY = 'a8D3f5jXzQp2L9Nv'
+
+// Funciones de encriptación y desencriptación
+const encryptData = (data: string): string => {
+  // Generar IV aleatorio
+  const iv = forge.random.getBytesSync(12)
+
+  // Derivar clave usando PBKDF2
+  const salt = forge.random.getBytesSync(16)
+  const key = forge.pkcs5.pbkdf2(ENCRYPTION_KEY, salt, 10000, 32)
+
+  // Crear cipher
+  const cipher = forge.cipher.createCipher('AES-GCM', key)
+  cipher.start({ iv: iv })
+  cipher.update(forge.util.createBuffer(data, 'utf8'))
+  cipher.finish()
+
+  // Obtener tag de autenticación
+  const tag = cipher.mode.tag!
+
+  // Combinar todos los componentes
+  const encrypted = forge.util.encode64(salt + iv + cipher.output.getBytes() + tag.getBytes())
+
+  // Para debug
+  console.log('Datos originales:', data)
+  console.log('Datos encriptados:', encrypted)
+  return encrypted
+}
+
+const decryptData = (encryptedData: string): string => {
+  try {
+    // Decodificar datos
+    const combined = forge.util.decode64(encryptedData)
+
+    // Extraer componentes
+    const salt = combined.slice(0, 16)
+    const iv = combined.slice(16, 28)
+    const tag = combined.slice(-16)
+    const encrypted = combined.slice(28, -16)
+
+    // Derivar clave
+    const key = forge.pkcs5.pbkdf2(ENCRYPTION_KEY, salt, 10000, 32)
+
+    // Crear decipher
+    const decipher = forge.cipher.createDecipher('AES-GCM', key)
+    decipher.start({
+      iv: iv,
+      tag: forge.util.createBuffer(tag)
+    })
+
+    decipher.update(forge.util.createBuffer(encrypted))
+    const pass = decipher.finish()
+
+    if (!pass) {
+      throw new Error('Falló la verificación de integridad')
+    }
+
+    return decipher.output.toString()
+  } catch (error) {
+    console.error('Error al desencriptar:', error)
+    throw new Error('Error al desencriptar los datos')
+  }
+}
 
 // Referencia para almacenar el token
 export const authToken = ref<string | null>(localStorage.getItem('auth_token'))
@@ -10,6 +76,7 @@ let failedQueue: Array<{
   resolve: (token: string) => void
   reject: (error: any) => void
 }> = []
+const { showError, showSuccess } = useNotification()
 
 const processQueue = (error: any = null) => {
   failedQueue.forEach(prom => {
@@ -59,7 +126,6 @@ export const getAuthToken = (): string | null => {
 
 // Función para refrescar el token
 export const refreshAuthToken = async (): Promise<string> => {
-  const { showError, showSuccess } = useNotification()
   try {
     const currentRefreshToken = getRefreshToken()
     const currentAccessToken = getAuthToken()
@@ -78,7 +144,7 @@ export const refreshAuthToken = async (): Promise<string> => {
 
     if (!response.ok) {
       const errorData = await response.json()
-      showError(errorData.detail || 'Error al refrescar el token', 'Error de Autenticación')
+      showError(errorData.detail?.mensaje || '')
       throw new Error('Failed to refresh token')
     }
 
@@ -160,13 +226,28 @@ export const useAuth = () => {
 
   const login = async (credentials: LoginCredentials): Promise<boolean> => {
     try {
+      // Encriptar credenciales antes de enviar
+      const encryptedCredentials = {
+        username: encryptData(credentials.username),
+        password: encryptData(credentials.password),
+        rememberMe: credentials.rememberMe
+      }
+
       const response = await fetch(getApiUrl('/users/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Encrypted': 'true' // Header para indicar que los datos están encriptados
         },
-        body: JSON.stringify(credentials),
+        body: JSON.stringify(encryptedCredentials),
       })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        showError(errorData.detail?.mensaje || '')
+        return false
+      }
+
       const data: AuthResponse = await response.json()
 
       // Guardar ambos tokens

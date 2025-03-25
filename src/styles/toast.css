@@ -59,3 +59,8 @@
 .Vue-Toastification__close-button:hover {
   opacity: 1;
 }
+
+.Vue-Toastification__toast-body {
+  display: flex;
+  align-items: center;
+}
