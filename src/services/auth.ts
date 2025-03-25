@@ -70,7 +70,7 @@ export const refreshAuthToken = async (): Promise<string> => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ access_token: currentAccessToken, refresh_token: currentRefreshToken }),
+      body: JSON.stringify({ access_token: currentAccessToken, refresh_token: currentRefreshToken, token_type: 'Bearer' }),
     })
 
     if (!response.ok) {

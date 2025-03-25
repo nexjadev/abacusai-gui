@@ -293,9 +293,9 @@ export function useChats() {
       }
 
       // Eliminar la última respuesta del bot
-      const lastBotMessageIndex = messages.value.findIndex((m) => m.role === 'BOT')
-      if (lastBotMessageIndex !== -1) {
-        messages.value.splice(lastBotMessageIndex, 1)
+      const lastBotMessage = messages.value[messages.value.length - 1]
+      if (lastBotMessage && lastBotMessage.role === 'BOT') {
+        messages.value.splice(messages.value.length - 1, 1)
       }
 
       await generate(

@@ -235,7 +235,7 @@ const fetchWithTokenRefresh = async (url: string, options: RequestInit): Promise
   try {
     const response = await fetch(url, options)
 
-    if (response.status === 401) {
+    if (response.status === 401 || response.status === 403) {
       // Token expirado, intentar refrescar
       const newToken = await handleTokenExpired()
 
