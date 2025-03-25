@@ -1,0 +1,61 @@
+:root {
+  --toastify-color-light: #fff;
+  --toastify-color-dark: #121212;
+  --toastify-color-info: #3498db;
+  --toastify-color-success: #07bc0c;
+  --toastify-color-warning: #f1c40f;
+  --toastify-color-error: #e74c3c;
+
+  /* Colores del texto */
+  --toastify-text-color-light: #757575;
+  --toastify-text-color-dark: #fff;
+
+  /* Fuente */
+  --toastify-font-family: system-ui, -apple-system, sans-serif;
+
+  /* Tamaño del toast */
+  --toastify-toast-width: 320px;
+  --toastify-toast-min-height: 64px;
+
+  /* Sombras */
+  --toastify-toast-box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+
+  /* Bordes redondeados */
+  --toastify-toast-border-radius: 8px;
+}
+
+/* Estilos personalizados para los toasts */
+.Vue-Toastification__toast {
+  padding: 16px 20px;
+}
+
+.Vue-Toastification__toast--success {
+  background-color: var(--toastify-color-success) !important;
+}
+
+.Vue-Toastification__toast--error {
+  background-color: var(--toastify-color-error) !important;
+}
+
+.Vue-Toastification__toast--warning {
+  background-color: var(--toastify-color-warning) !important;
+}
+
+.Vue-Toastification__toast--info {
+  background-color: var(--toastify-color-info) !important;
+}
+
+/* Personalización del icono */
+.Vue-Toastification__icon {
+  margin-right: 12px;
+}
+
+/* Personalización del botón de cerrar */
+.Vue-Toastification__close-button {
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.Vue-Toastification__close-button:hover {
+  opacity: 1;
+}

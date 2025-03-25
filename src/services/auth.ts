@@ -1,5 +1,6 @@
 import { ref } from 'vue'
 import { getApiUrl } from './appConfig'
+import { useNotification } from './notification'
 
 // Referencia para almacenar el token
 export const authToken = ref<string | null>(localStorage.getItem('auth_token'))
@@ -58,10 +59,12 @@ export const getAuthToken = (): string | null => {
 
 // Función para refrescar el token
 export const refreshAuthToken = async (): Promise<string> => {
+  const { showError, showSuccess } = useNotification()
   try {
     const currentRefreshToken = getRefreshToken()
     const currentAccessToken = getAuthToken()
     if (!currentRefreshToken) {
+      showError('No hay token de refresco disponible', 'Error de Autenticación')
       throw new Error('No refresh token available')
     }
 
@@ -74,11 +77,14 @@ export const refreshAuthToken = async (): Promise<string> => {
     })
 
     if (!response.ok) {
+      const errorData = await response.json()
+      showError(errorData.detail || 'Error al refrescar el token', 'Error de Autenticación')
       throw new Error('Failed to refresh token')
     }
 
     const data = await response.json()
     setAuthToken(data.access_token, data.refresh_token)
+    showSuccess('Token refrescado exitosamente', 'Autenticación')
     processQueue()
     return data.access_token
   } catch (error) {
