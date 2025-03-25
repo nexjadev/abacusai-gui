@@ -305,6 +305,7 @@ export const useApi = () => {
               const parsedChunk: StreamMessage = JSON.parse(part);
               onDataReceived(parsedChunk);
               results.push(parsedChunk);
+              await new Promise(resolve => setTimeout(resolve, 10)); // Espera 10ms antes de continuar
             } catch (e) {
               console.error('Error al parsear parte del chunk');
               console.error('exception -> ', e)

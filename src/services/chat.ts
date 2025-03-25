@@ -304,7 +304,7 @@ export function useChats() {
         (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId),
       )
       await updateChatTitle(currentChatId, content)
-      await getChats()
+      await switchChat(currentChatId)
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
