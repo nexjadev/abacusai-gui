@@ -235,6 +235,7 @@ export function useChats() {
       deploymentConversationId: currentChatId,
       message: content,
       isDesktop: true,
+      llmName: activeModel.value?.predictionOverrides?.llmName || '',
       chatConfig: {
         timezone: 'America/Lima',
         language: 'es-419',
@@ -278,6 +279,7 @@ export function useChats() {
       isDesktop: true,
       editPrompt: true,
       regenerate: true,
+      llmName: activeModel.value?.predictionOverrides?.llmName || '',
       chatConfig: {
         timezone: 'America/Lima',
         language: 'es-419',

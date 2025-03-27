@@ -155,6 +155,7 @@ export type MessageChatRequest = {
   externalApplicationId: string;
   editPrompt?: boolean;
   regenerate?: boolean;
+  llmName: string;
 }
 
 // Tipo base para todos los mensajes
