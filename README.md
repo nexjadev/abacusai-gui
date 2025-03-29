@@ -2,45 +2,33 @@
 
 ## 🐳 Comandos Docker
 
-### Construir y Publicar la Imagen
+### Crear una red
 ```bash
-# Compilar en modo prod
-npm run build
+docker network create mi-red
+```
 
-# Construir la imagen
-docker build -t multimindai-gui:v1.10 .
-
-# Etiquetar la imagen
-docker tag multimindai-gui:v1.10 javiervq/multimindaigui:v1.10
-
-# Publicar la imagen en Docker Hub
-docker push javiervq/multimindaigui:v1.10
+### Construir y Publicar la Imagen
+```powershell
+$registryUrl = "localhost:8082/repository/my-docker-hosted"
+docker stop contenedor-gui; docker rm contenedor-gui;
+docker build -t img-abacusai-gui .
+docker tag img-abacusai-gui $registryUrl/img-abacusai-gui:v1.10
+# docker run -d -p 8080:80 --name contenedor-gui --network mi_red img-abacusai-gui
+docker push $registryUrl/img-abacusai-gui:v1.10
 ```
 
 ### Desplegar en el Servidor
 ```bash
-# Obtener la última versión de la imagen
-docker pull javiervq/multimindaigui:v1.10
-
-# Detener y eliminar el contenedor existente
-docker stop contenedor-gui
-docker rm contenedor-gui
-
-# Ejecutar el nuevo contenedorF
-docker run -d \
-  -p 80:80 \
-  -p 443:443 \
-  --name contenedor-gui \
-  --network mi_red \
-  -v /etc/letsencrypt:/etc/letsencrypt:ro \
-  javiervq/multimindaigui:v1.10
+#!/bin/bash
+registry_url="7306-2803-a3e0-1592-ed50-99be-26e-fb5a-335b.ngrok-free.app/repository/my-docker-hosted"
+docker stop contenedor-gui; docker rm contenedor-gui
+docker pull "$registry_url/img-abacusai-gui:v1.10"
+docker tag "$registry_url/img-abacusai-gui:v1.10" img-abacusai-gui:v1.10
+docker run -d -p 8080:80 --name contenedor-gui --network mi_red img-abacusai-gui:v1.10
 ```
 
 ### Comandos de Mantenimiento
 ```bash
-# Eliminar una imagen
-docker rmi javiervq/multimindaigui:v1.10
-
 # Ver logs del contenedor
 docker logs contenedor-gui
 

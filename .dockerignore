@@ -1,0 +1,118 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Build output
+dist
+build
+out
+.output
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Git and GitHub
+.git
+.github
+.gitignore
+
+# Testing
+coverage
+/test
+/tests
+*.spec.js
+*.test.js
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose*
+.dockerignore
+
+# Logs
+logs
+*.log
+
+# Node modules
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+
+# Logs
+logs/
+*.log
+
+# Build directories
+dist/
+build/
+out/
+.next/
+.nuxt/
+.output/
+coverage/
+
+# Development and environment files
+.env
+.env.*
+*.local
+.DS_Store
+.eslintcache
+.stylelintcache
+
+# Git related files
+.git/
+.gitignore
+.gitattributes
+.github/
+
+# IDE related files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.project
+.classpath
+*.swp
+*.swo
+.history/
+
+# Test files and coverage reports
+__tests__/
+test/
+tests/
+coverage/
+.nyc_output/
+jest.config.js
+*.spec.js
+*.test.js
+*.spec.ts
+*.test.ts
+
+# OS specific files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Exclude files
+README.md
