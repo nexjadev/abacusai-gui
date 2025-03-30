@@ -21,6 +21,7 @@ docker push $registryUrl/img-abacusai-gui:v1.10
 ```bash
 #!/bin/bash
 registry_url="7306-2803-a3e0-1592-ed50-99be-26e-fb5a-335b.ngrok-free.app/repository/my-docker-hosted"
+# docker login "$registryUrl"
 docker stop contenedor-gui; docker rm contenedor-gui
 docker pull "$registry_url/img-abacusai-gui:v1.10"
 docker tag "$registry_url/img-abacusai-gui:v1.10" img-abacusai-gui:v1.10
