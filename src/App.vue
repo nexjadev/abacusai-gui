@@ -21,11 +21,12 @@ import { Conversation } from './services/api.ts'
 import { useAuth } from './services/auth.ts'
 
 const { refreshModels, availableModels } = useAI()
-const { switchModel, initialize, startNewChat } = useChats()
+const { switchModel, initialize, startNewChat, forceRoutingAction } = useChats()
 const isSidebarOpen = ref(true)
 const { isAuthenticated } = useAuth()
 
 const onNewChat = () => {
+  forceRoutingAction.value = false
   checkSystemPromptPanel()
   startNewChat()
 }

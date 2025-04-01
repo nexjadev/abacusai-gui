@@ -8,6 +8,7 @@ import {
 } from './appConfig.ts'
 import { useAI } from './useAi.ts'
 import {
+  AttachDocumentsRequest,
   ChatFinalResponse,
   ChatResponseSegment,
   Conversation,
@@ -33,6 +34,8 @@ const ongoingAiMessages = ref<Map<string, History>>(new Map())
 const TITLE_CONVERSATION = 'New Chat'
 const documentsUploaded = ref<DocumentFile[]>([])
 const filesUploaded = ref<DocumentFile[]>([])
+const isWebSearchActive = ref<boolean>(false)
+const forceRoutingAction = ref<boolean>(false)
 
 const clearUploadedFiles = () => {
   filesUploaded.value = []
@@ -62,6 +65,7 @@ export function useChats() {
     getAllDocuments,
     detachDocumentsConversation,
     getOneDocument,
+    attachDocumentsToConversation,
   } = useApi()
 
   const hasActiveChat = computed(() => activeChat.value !== null)
@@ -131,7 +135,15 @@ export function useChats() {
         if (!chatExists) {
           chats.value.unshift(chat)
         }
-        clearUploadedFiles()
+        // Recorrer los mensajes del historial del chat
+        if (chat.history && chat.history.length > 0) {
+          for (const message of chat.history) {
+            if (message.role === 'USER' && message.inputParams?.forceRoutingType) {
+              forceRoutingAction.value = true
+              break
+            }
+          }
+        }
       }
     } catch (error) {
       console.error(`Failed to switch to chat with ID ${currentModelId.value}:`, error)
@@ -199,7 +211,7 @@ export function useChats() {
       const newConversation = await createConversation(newChat)
       setActiveChat(newConversation)
       await addSystemMessage(await useConfig().getCurrentSystemMessage())
-      clearUploadedFiles()
+      // clearUploadedFiles()
     } catch (error) {
       console.error('Failed to start a new chat:', error)
     }
@@ -224,7 +236,7 @@ export function useChats() {
   }
 
   const addUserMessage = async (content: string) => {
-    if (!activeChat.value) {
+    if (!activeChat.value || !activeChat.value.deploymentConversationId) {
       console.warn('There was no active chat.')
       return
     }
@@ -242,6 +254,13 @@ export function useChats() {
       },
       externalApplicationId: activeModel.value?.externalApplicationId || '',
     }
+    if (filesUploaded.value.length > 0) {
+      message.docInfos = filesUploaded.value
+    }
+
+    if (isWebSearchActive.value) {
+      message.forceRoutingAction = 'WEB_SEARCH'
+    }
 
     try {
       await startUserMessage(content, currentChatId)
@@ -252,7 +271,6 @@ export function useChats() {
       )
       await updateChatTitle(currentChatId, content)
       await switchChat(currentChatId)
-      await getAllDocumentsUploaded()
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
@@ -408,13 +426,11 @@ export function useChats() {
   }
 
   const getAllDocumentsUploaded = async () => {
-    if (!activeChat.value) {
+    if (!activeChat.value || !activeChat.value.deploymentConversationId) {
       console.warn('There was no active chat.')
       return
     }
-    const response = await getAllDocuments(
-      activeChat.value?.deploymentConversationId ?? '',
-    )
+    const response = await getAllDocuments(activeChat.value.deploymentConversationId)
     documentsUploaded.value = response.docInfos
   }
 
@@ -552,7 +568,7 @@ export function useChats() {
             }
             aiMessage.segments.push(textSegment)
         } else if (data.type === 'text') {
-          const textSegment = aiMessage.segments.find((segment) => segment.type === 'text' && !segment.temp && segment.counter)
+          const textSegment = aiMessage.segments.find((segment) => segment.type === 'text' && !segment.temp && segment.counter > 1)
           if (textSegment && typeof textSegment.segment === 'string') {
             textSegment.segment = textSegment.segment + data.segment
             textSegment.messageId = data.messageId
@@ -576,6 +592,18 @@ export function useChats() {
     }
   }
 
+  const attachDocuments = async () => {
+    if (!activeChat.value || !activeChat.value.deploymentConversationId) {
+      console.warn('There was no active chat.')
+      return
+    }
+    const request: AttachDocumentsRequest = {
+      deploymentConversationId: activeChat.value.deploymentConversationId,
+      documentUploadIds: filesUploaded.value.map((file) => file.document_upload_id),
+    }
+    const response = await attachDocumentsToConversation(request)
+  }
+
   return {
     chats,
     // sortedChats,
@@ -586,6 +614,8 @@ export function useChats() {
     hasActiveChat,
     documentsUploaded,
     filesUploaded,
+    isWebSearchActive,
+    forceRoutingAction,
     renameChat,
     switchModel,
     createNewChat,
@@ -605,5 +635,7 @@ export function useChats() {
     getAllDocumentsUploaded,
     getOneDocumentUploaded,
     detachDocuments,
+    clearUploadedFiles,
+    attachDocuments,
   }
 }

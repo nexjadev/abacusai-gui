@@ -39,7 +39,7 @@ type ChatItem = {
 
 type FlattenedItem = HeaderItem | ChatItem
 
-const { chats, activeChat, switchChat, deleteChat, renameChat, getChats, getAllDocumentsUploaded } = useChats()
+const { chats, activeChat, switchChat, deleteChat, renameChat, getChats, getAllDocumentsUploaded, clearUploadedFiles } = useChats()
 const { logout } = useAuth()
 
 const editingChatId = ref<string | null>(null)
@@ -52,6 +52,7 @@ const chatToDelete = ref<{ deploymentId: string; deploymentConversationId: strin
 const onSwitchChat = async (deploymentConversationId: string) => {
   checkSystemPromptPanel()
   await switchChat(deploymentConversationId)
+  clearUploadedFiles()
   await getAllDocumentsUploaded()
 }
 
@@ -223,7 +224,7 @@ const handleDeleteConfirm = () => {
 <template>
   <aside class="sidebar-container">
     <div
-      class="flex h-screen w-60 flex-col overflow-y-auto border-r border-gray-200 bg-white pt-2 dark:border-gray-800 dark:bg-gray-900 sm:h-screen sm:w-64"
+      class="flex h-screen w-60 flex-col overflow-y-auto border-r border-gray-200 bg-gray-100 pt-2 dark:border-gray-800 dark:bg-gray-900 sm:h-screen sm:w-64"
     >
       <div class="mx-2 mb-2">
         <div class="relative">
@@ -259,7 +260,7 @@ const handleDeleteConfirm = () => {
               :class="{
                 'bg-purple-100 dark:bg-purple-900': activeChat?.deploymentConversationId === (item as ChatItem).chat.deploymentConversationId
               }"
-              class="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer"
+              class="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer"
             >
               <span v-if="editingChatId !== (item as ChatItem).chat.deploymentConversationId" class="text-sm text-gray-900 dark:text-gray-100">{{ (item as ChatItem).chat.name }}</span>
               <div v-if="activeChat?.deploymentConversationId === (item as ChatItem).chat.deploymentConversationId" class="flex items-center space-x-1">
@@ -307,21 +308,21 @@ const handleDeleteConfirm = () => {
         <div class="flex items-center justify-between px-2 py-1">
           <div class="flex items-center space-x-2">
             <button
-              class="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+              class="rounded-md p-1 hover:bg-gray-200 dark:hover:bg-gray-800"
               @click="isDarkMode = !isDarkMode"
             >
-              <IconSun v-if="isDarkMode" class="h-5 w-5 text-gray-600 dark:text-gray-300" />
-              <IconMoon v-else class="h-5 w-5 text-gray-600 dark:text-gray-300" />
+              <IconSun v-if="isDarkMode" class="h-6 w-6 text-gray-600 dark:text-gray-300" />
+              <IconMoon v-else class="h-6 w-6 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
 
           <!-- botón logout -->
           <button
-            class="rounded-md p-1 hover:bg-gray-100 dark:hover:bg-gray-800"
+            class="rounded-md p-1 hover:bg-gray-200 dark:hover:bg-gray-800"
             @click="handleLogout"
             title="Cerrar sesión"
           >
-            <IconLogout class="h-5 w-5 text-gray-600 dark:text-gray-300" />
+            <IconLogout class="h-6 w-6 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
       </div>

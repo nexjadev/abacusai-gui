@@ -14,7 +14,6 @@ export const avatarUrl = computed(() => gravatarEmail.value
 )
 export const enableMarkdown = useLocalStorage('markdown', true)
 export const showSystem = useLocalStorage('systemMessages', true)
-export const baseUrl = useLocalStorage('baseUrl', 'https://multimindai.lat/api')
 export const isDarkMode = useLocalStorage('darkMode', false)
 export const isSettingsOpen = useLocalStorage('settingsPanelOpen', true)
 export const isSystemPromptOpen = useLocalStorage('systemPromptOpen', false)
@@ -23,7 +22,8 @@ export const toggleSystemPromptPanel = () => (isSystemPromptOpen.value = !isSyst
 const imageDictionary = ref()
 
 // Define a method to get the full API URL for a given path
-export const getApiUrl = (path: string) => `${baseUrl.value}${path}`
+export const getApiUrl = (path: string) => `${'https://multimindai.lat/api'}${path}`
+// export const getApiUrl = (path: string) => `${'http://localhost:8000'}${path}`
 
 // Database Layer
 export const configDbLayer = {

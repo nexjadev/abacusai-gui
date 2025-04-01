@@ -156,6 +156,8 @@ export type MessageChatRequest = {
   editPrompt?: boolean;
   regenerate?: boolean;
   llmName: string;
+  docInfos?: DocumentFile[],
+  forceRoutingAction?: string;
 }
 
 // Tipo base para todos los mensajes
@@ -223,6 +225,11 @@ export type DocumentFile = {
 export type ListFilesResponse = {
   docInfos: DocumentFile[];
   maxCount: number;
+}
+
+export type AttachDocumentsRequest = {
+  deploymentConversationId: string;
+  documentUploadIds: string[];
 }
 
 // Tipo unión para manejar cualquier tipo de mensaje
@@ -497,6 +504,17 @@ export const useApi = () => {
     return response_request.result as ListFilesResponse
   }
 
+  // adjuntar documentos a una conversación
+  const attachDocumentsToConversation = async (request: AttachDocumentsRequest): Promise<ListFilesResponse> => {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/attach-documents'), {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(request),
+    })
+    const response_request: AbacusResponse<ListFilesResponse> = await response.json()
+    return response_request.result as ListFilesResponse
+  }
+
   const abort = () => {
     if (abortController.value) {
       abortController.value.abort()
@@ -527,5 +545,6 @@ export const useApi = () => {
     getOneDocument,
     getDocumentDownloadUrl,
     detachDocumentsConversation,
+    attachDocumentsToConversation,
   }
 }

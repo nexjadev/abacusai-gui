@@ -16,9 +16,14 @@ const {
   activeChat,
   activeModel,
   filesUploaded,
+  isWebSearchActive,
+  forceRoutingAction,
   getOneDocumentUploaded,
   detachDocuments,
   createNewChat,
+  getAllDocumentsUploaded,
+  clearUploadedFiles,
+  attachDocuments,
 } = useChats()
 
 const { getDocumentDownloadUrl } = useApi()
@@ -28,10 +33,10 @@ const isInputValid = computed<boolean>(() => !!userInput.value.trim())
 const isAiResponding = ref(false)
 const flag = ref(true)
 const showAttachMenu = ref(false)
-const isWebSearchActive = ref(false)
 const selectedFiles = ref<File[]>([])
 const fileInputRef = ref<HTMLInputElement | null>(null)
 const fileUrls = ref<Map<File, string>>(new Map())
+const isUploadingFiles = ref(false)
 
 const emit = defineEmits(['web-search-toggle'])
 
@@ -49,9 +54,12 @@ const onSubmit = async () => {
       if (!activeChat.value?.deploymentConversationId) {
         await createNewChat()
       }
+      await attachDocuments()
       addUserMessage(userInput.value.trim()).then(() => {
         isAiResponding.value = false
       })
+      clearUploadedFiles()
+      await getAllDocumentsUploaded()
     }
     userInput.value = ''
     if (!isSystemMessage.value) {
@@ -67,10 +75,10 @@ const shouldSubmit = ({ key, shiftKey }: KeyboardEvent): boolean => {
 const onKeydown = (event: KeyboardEvent) => {
   if (shouldSubmit(event) && flag.value) {
     // Pressing enter while the ai is responding should not abort the request
-    if (isAiResponding.value) {
+    if (isAiResponding.value || isUploadingFiles.value) {
       return
     }
-
+    flag.value = false
     event.preventDefault()
     onSubmit()
   }
@@ -122,13 +130,7 @@ const handleFileSelect = async (event: Event) => {
   })
 
   selectedFiles.value = validFiles
-
-  // Crear URLs para las imágenes
-  validFiles.forEach((file) => {
-    if (file.type.startsWith('image/')) {
-      fileUrls.value.set(file, URL.createObjectURL(file))
-    }
-  })
+  isUploadingFiles.value = true
 
   // Subir cada archivo válido
   for (const file of validFiles) {
@@ -148,6 +150,7 @@ const handleFileSelect = async (event: Event) => {
     }
   }
 
+  isUploadingFiles.value = false
   // Limpiar el input
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
@@ -174,6 +177,11 @@ onUnmounted(() => {
   document.removeEventListener('click', closeAttachMenu)
   fileUrls.value.forEach((url) => URL.revokeObjectURL(url))
 })
+
+const isImage = (file: File): boolean => {
+  return file.type.startsWith('image/')
+}
+
 </script>
 
 <template>
@@ -252,6 +260,7 @@ onUnmounted(() => {
       <button
         type="button"
         @click="toggleWebSearch"
+        v-if="!forceRoutingAction"
         :disabled="showAttachMenu"
         :class="[
           'rounded-lg p-2 transition-colors duration-200',
@@ -324,14 +333,22 @@ onUnmounted(() => {
               </svg>
             </div>
           </div>
-          <div
-            class="flex !size-8 items-center justify-center rounded-lg bg-gray-500 text-white"
-          >
-            <img
-              :src="getDocumentDownloadUrl(file.doc_id)"
-              alt="Image"
-              style="width: 30px; height: 30px; border-radius: 8px"
-            />
+          <div class="flex !size-8 items-center justify-center rounded-lg bg-gray-500 text-white">
+            <template v-if="file.mime_type.startsWith('image/')">
+              <img
+                :src="getDocumentDownloadUrl(file.doc_id)" alt="Image"
+                style="width: 30px; height: 30px; border-radius: 8px"
+              />
+            </template>
+            <template v-else>
+              <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file"
+                  class="svg-inline--fa fa-file w-4 h-4" role="img" xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 384 512">
+                  <path fill="currentColor"
+                      d="M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128z">
+                  </path>
+              </svg>
+            </template>
           </div>
           <div class="ml-[8px] ms-[6px] min-w-0 flex-1">
             <p
@@ -363,7 +380,7 @@ onUnmounted(() => {
       <textarea
         ref="textarea"
         v-model="userInput"
-        class="block max-h-[500px] w-full resize-none rounded-xl border-none bg-gray-50 p-4 pl-4 pr-20 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-gray-700 dark:text-gray-50 dark:placeholder-gray-300 dark:focus:ring-blue-600 sm:text-base"
+        class="block max-h-[500px] w-full resize-none rounded-xl border-none bg-gray-100 p-4 pl-4 pr-20 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:bg-gray-700 dark:text-gray-50 dark:placeholder-gray-300 dark:focus:ring-blue-600 sm:text-base"
         placeholder="Enter your prompt"
         @keydown="onKeydown"
         @compositionstart="handleCompositionStart"
@@ -371,8 +388,8 @@ onUnmounted(() => {
       ></textarea>
       <button
         type="submit"
-        :disabled="isInputValid == false && isAiResponding == false"
-        class="group absolute bottom-2 right-2.5 flex size-10 items-center justify-center rounded-lg bg-blue-700 text-sm font-medium text-white transition duration-200 ease-in-out hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:bg-gray-400 disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 dark:disabled:bg-gray-600 sm:text-base"
+        :disabled="(isInputValid == false && isAiResponding == false) || isUploadingFiles"
+        class="group absolute bottom-2 right-4 flex size-10 items-center justify-center rounded-lg bg-blue-700 text-sm font-medium text-white transition duration-200 ease-in-out hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:bg-gray-400 disabled:opacity-50 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 dark:disabled:bg-gray-600 sm:text-base"
       >
         <IconPlayerStopFilled
           v-if="isAiResponding"
