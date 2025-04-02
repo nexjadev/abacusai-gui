@@ -567,12 +567,12 @@ export function useChats() {
               messageId: data.messageId
             }
             aiMessage.segments.push(textSegment)
-        } else if (data.type === 'text') {
-          const textSegment = aiMessage.segments.find((segment) => segment.type === 'text' && !segment.temp && segment.counter > 1)
-          if (textSegment && typeof textSegment.segment === 'string') {
-            textSegment.segment = textSegment.segment + data.segment
-            textSegment.messageId = data.messageId
-            textSegment.counter = data.counter
+        } else if (data.type === 'text' && !data.temp) {
+          const lastSegment = aiMessage.segments[aiMessage.segments.length - 1]
+          if (lastSegment && lastSegment.type === 'text' && !lastSegment.temp && typeof lastSegment.segment === 'string') {
+            lastSegment.segment = lastSegment.segment + data.segment
+            lastSegment.messageId = data.messageId
+            lastSegment.counter = data.counter
           } else {
             const textSegment: ChatResponseSegment = {
               type: 'text',
