@@ -1,6 +1,10 @@
 import { ref } from 'vue'
 import { getApiUrl } from './appConfig';
 import { getAuthHeaders, getAuthToken, handleTokenExpired } from './auth';
+import { MessageChatRequest } from '../dtos/message.dto';
+import {StreamMessage} from "../dtos/steam-message.dto.ts";
+import {LlmModel} from "../dtos/llm-model.dto.ts";
+import {Conversation, CreateConversationRequest, RenameConversationRequest, TitleConversationRequest} from "../dtos/conversation.dto.ts";
 
 
 export type ExternalApplication = {
@@ -19,49 +23,15 @@ export type ExternalApplication = {
 }
 
 
-export type Conversation = {
-  deploymentConversationId: string;
-  name: string;
-  deploymentId: string;
-  createdAt: Date;
-  externalApplicationId: string;
-  conversationType: 'CHATLLM';
-  metadata: {
-    chatllmTeamsV2: boolean;
-  };
-  hasHistory: boolean;
-  history?: History[];
-};
-
-export type CreateConversationRequest = {
-  name: string;
-  deploymentId: string;
-  externalApplicationId: string;
-};
-
-export type TitleConversationRequest = {
-  deploymentConversationId: string;
-  userMessage: string;
-}
-
 export type DeleteConversationRequest = {
   deploymentId: string;
   deploymentConversationId: string;
 }
 
-export type RenameConversationRequest = {
-  deploymentId: string;
-  deploymentConversationId: string;
-  name: string;
-}
 
 export type DetachDocumentsRequest = {
   documentUploadIds: string[];
   deploymentConversationId: string;
-}
-
-export type TitleConversationResponse = {
-  title: string;
 }
 
 export type UploadDataConversationResponse = {
@@ -116,24 +86,6 @@ type DocInfo = {
   documentUploadId: string;
 };
 
-export type History = {
-  regenerateAttempt: number;
-  inputParams: InputParams;
-  role: 'USER' | 'BOT';
-  timestamp: string;
-  messageIndex: number;
-  text: string;
-  modelVersion: string;
-  segments: ChatResponseSegment[];
-  searchResults?: SearchResults;
-  streamedData?: string;
-  streamedSectionData?: any[];
-  llmDisplayName?: string;
-  llmBotIcon?: string;
-  routedLlm?: string;
-  docInfos?: DocInfo[];
-};
-
 export type AbacusResponse<T> = {
   success: boolean;
   result: T[] | T;
@@ -144,20 +96,6 @@ export type AbacusResponse<T> = {
 export type ChatConfig = {
   timezone: string;
   language: string;
-}
-
-export type MessageChatRequest = {
-  requestId: string;
-  deploymentConversationId: string;
-  message: string;
-  isDesktop: boolean;
-  chatConfig: ChatConfig;
-  externalApplicationId: string;
-  editPrompt?: boolean;
-  regenerate?: boolean;
-  llmName: string;
-  docInfos?: DocumentFile[],
-  forceRoutingAction?: string;
 }
 
 // Tipo base para todos los mensajes
@@ -176,36 +114,6 @@ export type ChatResponseSubSegment = {
   is_spinny: boolean;
   title: string;
   is_generating_image: boolean;
-}
-
-// Tipo para los segmentos de respuesta
-export type ChatResponseSegment = {
-  type: string;
-  temp?: boolean;
-  isSpinny?: boolean;
-  segment: string | ChatResponseSubSegment;
-  title?: string;
-  isGeneratingImage?: boolean;
-  messageId: string;
-  counter: number;
-  message_id?: string;
-  ping?: boolean;
-  isRouting?: boolean;
-  isCollapsed?: boolean;
-  isComplexSegment?: boolean;
-  model?: string;
-  language?: string;
-  showExecuteButton?: boolean;
-  codeId?: string;
-  indentLevel?: number;
-}
-
-// Tipo para la respuesta final
-export type ChatFinalResponse = {
-  token: null;
-  end: boolean;
-  success: boolean;
-  counter: number;
 }
 
 export type DocumentFile = {
@@ -231,9 +139,6 @@ export type AttachDocumentsRequest = {
   deploymentConversationId: string;
   documentUploadIds: string[];
 }
-
-// Tipo unión para manejar cualquier tipo de mensaje
-export type StreamMessage = ChatResponseSegment | ChatFinalResponse;
 
 const abortController = ref<AbortController>(new AbortController())
 const signal = ref<AbortSignal>(abortController.value.signal)
@@ -283,7 +188,7 @@ export const useApi = () => {
   const error = ref(null)
 
   const generateChat = async (request: MessageChatRequest, onDataReceived: (data: any) => void): Promise<any[]> => {
-    const res = await fetchWithTokenRefresh(getApiUrl('/conversations/send-message-sse'), {
+    const res = await fetchWithTokenRefresh(getApiUrl('/conversations/response'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
@@ -332,16 +237,16 @@ export const useApi = () => {
   }
 
   // List local models
-  const listLocalModels = async (): Promise<ExternalApplication[]> => {
-    const response = await fetchWithTokenRefresh(getApiUrl('/applications/list'), {
+  const listLocalModels = async (): Promise<LlmModel[]> => {
+    const response = await fetchWithTokenRefresh(getApiUrl('/llm/models'), {
       method: 'GET',
       headers: getAuthHeaders(),
     })
-    const listLocalModels: AbacusResponse<ExternalApplication> = await response.json()
+    const listLocalModels: AbacusResponse<LlmModel> = await response.json()
     if (!listLocalModels.success) {
       throw new Error(listLocalModels.error)
     }
-    return listLocalModels.result as ExternalApplication[]
+    return listLocalModels.result as LlmModel[]
   }
 
   // Show model information
@@ -362,12 +267,12 @@ export const useApi = () => {
   // Generate embeddings
 
   // getAllChats
-  const getAllChats = async (deploymentId: string, limit: string): Promise<Conversation[]> => {
+  const getAllChats = async (user_id: string, limit: string): Promise<Conversation[]> => {
     const queryParams = new URLSearchParams({
-      deploymentId,
-      limit
+      user_id: user_id,
+      limit: limit
     });
-    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/list?' + queryParams.toString()), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations?' + queryParams.toString()), {
       method: 'GET',
       headers: getAuthHeaders()
     })
@@ -379,11 +284,10 @@ export const useApi = () => {
   }
 
   // getChat
-  const getChat = async (deploymentConversationId: string): Promise<Conversation> => {
+  const getChat = async (conversation_id: string, user_id: string): Promise<Conversation> => {
     const queryParams = new URLSearchParams({
-      deploymentConversationId,
-      skipDocumentBoundingBoxes: "true",
-      filterIntermediateConversationEvents: "true",
+      conversation_id: conversation_id,
+      user_id: user_id,
     });
     const response = await fetchWithTokenRefresh(getApiUrl('/conversations/one?' + queryParams.toString()), {
       method: 'GET',
@@ -411,17 +315,16 @@ export const useApi = () => {
   }
 
   // titleConversation
-  const titleConversation = async (request: TitleConversationRequest): Promise<TitleConversationResponse> => {
+  const titleConversation = async (request: TitleConversationRequest): Promise<void> => {
     const response = await fetchWithTokenRefresh(getApiUrl('/conversations/title'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })
-    const response_request: AbacusResponse<TitleConversationResponse> = await response.json()
+    const response_request: AbacusResponse<null> = await response.json()
     if (!response_request.success) {
       throw new Error(response_request.error)
     }
-    return response_request.result as TitleConversationResponse
   }
 
   // Delete a Conversation
