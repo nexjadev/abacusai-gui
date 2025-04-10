@@ -7,7 +7,6 @@ import Login from './components/Login.vue'
 import ModelSelector from './components/ModelSelector.vue'
 
 import {
-  currentExtAppId,
   currentModelId,
   isDarkMode,
   isSettingsOpen,
@@ -38,8 +37,8 @@ const checkSystemPromptPanel = () => {
 const initializeApp = async () => {
   try {
     await refreshModels()
-    if (currentModelId.value && currentExtAppId.value) {
-      await switchModel(currentModelId.value, currentExtAppId.value)
+    if (currentModelId.value) {
+      await switchModel(currentModelId.value)
     } else if (availableModels.value && availableModels.value.length > 0) {
       await switchModel(availableModels.value[0].deploymentId, availableModels.value[0].externalApplicationId)
     } else {

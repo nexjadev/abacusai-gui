@@ -1,7 +1,10 @@
 import { ref } from 'vue'
-import { ChatFinalResponse, ChatResponseSegment, ExternalApplication, MessageChatRequest, StreamMessage, useApi } from './api'
+import { useApi } from './api'
+import { LlmModel } from "../dtos/llm-model.dto.ts";
+import { ChatFinalResponse, ChatResponseSegment, StreamMessage} from "../dtos/steam-message.dto.ts";
+import { MessageChatRequest } from "../dtos/message.dto.ts";
 
-const availableModels = ref<ExternalApplication[]>([])
+const availableModels = ref<LlmModel[]>([])
 
 export const useAI = () => {
   const { generateChat, listLocalModels } = useApi()
@@ -12,11 +15,6 @@ export const useAI = () => {
     onDone?: (data: ChatFinalResponse) => void,
   ) => {
     await generateChat(message, (data: StreamMessage) => {
-      if ('ping' in data) {
-        // Ignorar mensajes de ping
-        return;
-      }
-
       if ('end' in data) {
         // Es un mensaje de finalización
         if (onDone) {

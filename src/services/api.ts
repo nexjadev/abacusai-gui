@@ -4,30 +4,7 @@ import { getAuthHeaders, getAuthToken, handleTokenExpired } from './auth';
 import { MessageChatRequest } from '../dtos/message.dto';
 import {StreamMessage} from "../dtos/steam-message.dto.ts";
 import {LlmModel} from "../dtos/llm-model.dto.ts";
-import {Conversation, CreateConversationRequest, RenameConversationRequest, TitleConversationRequest} from "../dtos/conversation.dto.ts";
-
-
-export type ExternalApplication = {
-  name: string;
-  externalApplicationId: string;
-  deploymentId: string;
-  description: string;
-  isAgent: number;
-  predictionOverrides?: Record<string, any>;
-  isSystemCreated: number;
-  isCustomizable: boolean;
-  isVisible: boolean;
-  hasThinkingOption: boolean;
-  status: string;
-  isExpensive?: boolean;
-}
-
-
-export type DeleteConversationRequest = {
-  deploymentId: string;
-  deploymentConversationId: string;
-}
-
+import {Conversation, CreateConversationRequest, DeleteConversationRequest, RenameConversationRequest, TitleConversationRequest} from "../dtos/conversation.dto.ts";
 
 export type DetachDocumentsRequest = {
   documentUploadIds: string[];

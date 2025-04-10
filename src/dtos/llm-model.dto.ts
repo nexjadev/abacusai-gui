@@ -1,5 +1,5 @@
 export interface LlmModel {
-    llmModelId: number;
+    llm_model_id: string;
     name: string;
     description: string;
     createdAt: Date;

@@ -4,33 +4,26 @@ import {
   useConfig,
   currentChatId,
   historyChatLength,
-  currentExtAppId,
 } from './appConfig.ts'
 import { useAI } from './useAi.ts'
 import {
   AttachDocumentsRequest,
-  ChatFinalResponse,
-  ChatResponseSegment,
-  Conversation,
-  CreateConversationRequest,
-  DeleteConversationRequest,
   DetachDocumentsRequest,
   DocumentFile,
-  ExternalApplication,
-  History,
-  MessageChatRequest,
-  RenameConversationRequest,
-  TitleConversationRequest,
   UploadDataConversationResponse,
   useApi,
 } from './api.ts'
+import {LlmModel} from "../dtos/llm-model.dto.ts";
+import {Conversation, CreateConversationRequest, DeleteConversationRequest, RenameConversationRequest, TitleConversationRequest} from "../dtos/conversation.dto.ts";
+import {Message, MessageChatRequest} from "../dtos/message.dto.ts";
+import {ChatFinalResponse, ChatResponseSegment} from "../dtos/steam-message.dto.ts";
 
 const chats = ref<Conversation[]>([])
 const activeChat = ref<Conversation | null>(null)
-const activeModel = ref<ExternalApplication | null>(null)
-const messages = ref<History[]>([])
-const systemPrompt = ref<History>()
-const ongoingAiMessages = ref<Map<string, History>>(new Map())
+const activeModel = ref<LlmModel | null>(null)
+const messages = ref<Message[]>([])
+const systemPrompt = ref<Message>()
+const ongoingAiMessages = ref<Map<string, Message>>(new Map())
 const TITLE_CONVERSATION = 'New Chat'
 const documentsUploaded = ref<DocumentFile[]>([])
 const filesUploaded = ref<DocumentFile[]>([])
@@ -43,11 +36,11 @@ const clearUploadedFiles = () => {
 }
 
 // Función auxiliar para determinar si un mensaje es editable
-const isMessageEditable = (message: History): boolean => {
-  if (message.role !== 'USER') return false
+const isMessageEditable = (message: Message): boolean => {
+  if (message.role !== 'user') return false
   const lastUserMessageIndex = [...messages.value]
     .reverse()
-    .findIndex((m) => m.role === 'USER')
+    .findIndex((m) => m.role === 'user')
   return lastUserMessageIndex === 0
 }
 
@@ -73,22 +66,22 @@ export function useChats() {
 
   const setActiveChat = (chat: Conversation) => {
     activeChat.value = chat
-    currentChatId.value = chat.deploymentConversationId
-    if (chat.history) {
-      messages.value = chat.history
+    currentChatId.value = chat.conversation_id
+    if (chat.messages) {
+      messages.value = chat.messages
     } else {
       messages.value = []
     }
   }
 
-  const setMessages = (newMessages: History[]) => {
+  const setMessages = (newMessages: Message[]) => {
     messages.value = newMessages
     if (activeChat.value) {
-      activeChat.value.history = newMessages
+      activeChat.value.messages = newMessages
     }
   }
 
-  const setActiveModel = (model: ExternalApplication) => {
+  const setActiveModel = (model: LlmModel) => {
     activeModel.value = model
   }
 
@@ -109,39 +102,31 @@ export function useChats() {
 
   const getChats = async () => {
     try {
-      chats.value = await getAllChats(
-        currentModelId.value,
-        historyChatLength.value.toString(),
-      )
+      chats.value = await getAllChats("2", historyChatLength.value.toString(),)
     } catch (error) {
       console.error('Failed to get chats:', error)
     }
   }
 
-  const switchChat = async (deploymentConversationId: string) => {
+  const switchChat = async (conversationId: string) => {
     try {
-      const chat = await getChat(deploymentConversationId)
+      const chat = await getChat(conversationId, "2")
       if (chat) {
         setActiveChat(chat)
         if (activeChat.value) {
-          await switchModel(
-            activeChat.value.deploymentId,
-            activeChat.value.externalApplicationId,
-          )
+          await switchModel(activeChat.value.llm_model_id)
         }
-        const chatExists = chats.value.some(
-          (c) => c.deploymentConversationId === chat.deploymentConversationId,
-        )
+        const chatExists = chats.value.some((c) => c.conversation_id === chat.conversation_id)
         if (!chatExists) {
           chats.value.unshift(chat)
         }
         // Recorrer los mensajes del historial del chat
-        if (chat.history && chat.history.length > 0) {
-          for (const message of chat.history) {
-            if (message.role === 'USER' && message.inputParams?.forceRoutingType) {
-              forceRoutingAction.value = true
-              break
-            }
+        if (chat.messages && chat.messages.length > 0) {
+          for (const message of chat.messages) {
+            // if (message.role === 'user' && message.inputParams?.forceRoutingType) {
+            //   forceRoutingAction.value = true
+            //   break
+            // }
           }
         }
       }
@@ -150,31 +135,26 @@ export function useChats() {
     }
   }
 
-  const switchModel = async (deploymentId: string, externalApplicationId: string) => {
-    currentModelId.value = deploymentId
-    currentExtAppId.value = externalApplicationId
+  const switchModel = async (llmModelId: string) => {
+    currentModelId.value = llmModelId
     try {
-      const model = availableModels.value.find(
-        (model) =>
-          model.deploymentId === deploymentId &&
-          model.externalApplicationId === externalApplicationId,
-      )
+      const model = availableModels.value.find((model) => model.llm_model_id == llmModelId)
       if (model) {
         setActiveModel(model)
       }
     } catch (error) {
-      console.error(`Failed to switch model to ${deploymentId}:`, error)
+      console.error(`Failed to switch model to ${llmModelId}:`, error)
     }
   }
 
-  const renameChat = async (deploymentConversationId: string, newName: string) => {
+  const renameChat = async (conversationId: string, newTitle: string) => {
     if (!activeChat.value) return
 
-    activeChat.value.name = newName
+    activeChat.value.title = newTitle
     const request: RenameConversationRequest = {
-      deploymentId: currentModelId.value,
-      deploymentConversationId: deploymentConversationId,
-      name: newName,
+      conversation_id: currentModelId.value,
+      user_id: "2",
+      new_title: newTitle,
     }
     await renameConversation(request)
     await getChats()
@@ -182,17 +162,14 @@ export function useChats() {
 
   const startNewChat = async () => {
     const chat: Conversation = {
-      deploymentConversationId: '',
-      name: '',
-      deploymentId: '',
-      createdAt: new Date(),
-      externalApplicationId: '',
-      conversationType: 'CHATLLM',
-      metadata: {
-        chatllmTeamsV2: false
-      },
-      hasHistory: false,
-      history: []
+      conversation_id: '',
+      user_id: '2',
+      title: TITLE_CONVERSATION,
+      llm_model_id: activeModel.value?.llm_model_id || '',
+      system_prompt_id: '',
+      messages: [],
+      created_at: new Date(),
+      updated_at: new Date(),
     }
 
     setActiveChat(chat)
@@ -202,9 +179,10 @@ export function useChats() {
 
   const createNewChat = async (name: string = TITLE_CONVERSATION) => {
     const newChat: CreateConversationRequest = {
-      externalApplicationId: activeModel.value?.externalApplicationId || '',
-      name: name,
-      deploymentId: activeModel.value?.deploymentId || '',
+      llm_model_id: activeModel.value?.llm_model_id || '',
+      title: name,
+      user_id: '2',
+      system_prompt_id: null,
     }
 
     try {
@@ -236,31 +214,24 @@ export function useChats() {
   }
 
   const addUserMessage = async (content: string) => {
-    if (!activeChat.value || !activeChat.value.deploymentConversationId) {
+    if (!activeChat.value) {
       console.warn('There was no active chat.')
       return
     }
 
-    const currentChatId = activeChat.value.deploymentConversationId!
+    const currentChatId = activeChat.value.conversation_id!
     const message: MessageChatRequest = {
-      requestId: crypto.randomUUID(),
-      deploymentConversationId: currentChatId,
+      conversation_id: currentChatId,
       message: content,
-      isDesktop: true,
-      llmName: activeModel.value?.predictionOverrides?.llmName || '',
-      chatConfig: {
-        timezone: 'America/Lima',
-        language: 'es-419',
-      },
-      externalApplicationId: activeModel.value?.externalApplicationId || '',
+      user_id: "2",
     }
-    if (filesUploaded.value.length > 0) {
-      message.docInfos = filesUploaded.value
-    }
+    // if (filesUploaded.value.length > 0) {
+    //   message.docInfos = filesUploaded.value
+    // }
 
-    if (isWebSearchActive.value) {
-      message.forceRoutingAction = 'WEB_SEARCH'
-    }
+    // if (isWebSearchActive.value) {
+    //   message.forceRoutingAction = 'WEB_SEARCH'
+    // }
 
     try {
       await startUserMessage(content, currentChatId)
@@ -289,32 +260,25 @@ export function useChats() {
       return
     }
 
-    const currentChatId = activeChat.value.deploymentConversationId!
+    const currentChatId = activeChat.value.conversation_id!
     const message: MessageChatRequest = {
-      requestId: crypto.randomUUID(),
-      deploymentConversationId: currentChatId,
+      conversation_id: currentChatId,
       message: content,
-      isDesktop: true,
-      editPrompt: true,
-      regenerate: true,
-      llmName: activeModel.value?.predictionOverrides?.llmName || '',
-      chatConfig: {
-        timezone: 'America/Lima',
-        language: 'es-419',
-      },
-      externalApplicationId: activeModel.value?.externalApplicationId || '',
+      user_id: "2",
+      // editPrompt: true,
+      // regenerate: true,
     }
 
     try {
       // Encontrar y actualizar el último mensaje del usuario
-      const lastUserMessage = [...messages.value].reverse().find((m) => m.role === 'USER')
+      const lastUserMessage = [...messages.value].reverse().find((m) => m.role === 'user')
       if (lastUserMessage) {
-        lastUserMessage.text = content
+        lastUserMessage.content = content
       }
 
       // Eliminar la última respuesta del bot
       const lastBotMessage = messages.value[messages.value.length - 1]
-      if (lastBotMessage && lastBotMessage.role === 'BOT') {
+      if (lastBotMessage && lastBotMessage.role === 'assistant') {
         messages.value.splice(messages.value.length - 1, 1)
       }
 
@@ -355,14 +319,16 @@ export function useChats() {
     }
   }
 
-  async function updateChatTitle(deploymentConversationId: string, userMessage: string) {
-    if (activeChat.value?.name === TITLE_CONVERSATION) {
-      const request: TitleConversationRequest = {
-        deploymentConversationId: deploymentConversationId,
-        userMessage: userMessage,
-      }
-      const response = await titleConversation(request)
-      activeChat.value.name = response.title
+  async function updateChatTitle(conversationId: string, userMessage: string) {
+    const request: TitleConversationRequest = {
+      conversation_id: conversationId,
+      user_id: "2",
+      user_message: userMessage
+    }
+    await titleConversation(request)
+    const chat = await getChat(conversationId, "2")
+    if (chat) {
+      setActiveChat(chat)
     }
   }
 
@@ -383,17 +349,17 @@ export function useChats() {
     }
   }
 
-  const deleteChat = async (deploymentId: string, deploymentConversationId: string) => {
+  const deleteChat = async (conversationId: string) => {
     try {
       const request: DeleteConversationRequest = {
-        deploymentId: deploymentId,
-        deploymentConversationId: deploymentConversationId,
+        conversation_id: conversationId,
+        user_id: "2",
       }
       await deleteConversation(request)
 
       // Encontrar el índice del chat a eliminar
       const chatIndex = chats.value.findIndex(
-        (chat) => chat.deploymentConversationId === deploymentConversationId,
+        (chat) => chat.conversation_id == conversationId,
       )
       if (chatIndex !== -1) {
         // Remover el chat de la lista
@@ -402,7 +368,7 @@ export function useChats() {
 
       await startNewChat()
     } catch (error) {
-      console.error(`Failed to delete chat with ID ${deploymentConversationId}:`, error)
+      console.error(`Failed to delete chat with ID ${conversationId}:`, error)
     }
   }
 
@@ -426,11 +392,11 @@ export function useChats() {
   }
 
   const getAllDocumentsUploaded = async () => {
-    if (!activeChat.value || !activeChat.value.deploymentConversationId) {
+    if (!activeChat.value || !activeChat.value.conversation_id) {
       console.warn('There was no active chat.')
       return
     }
-    const response = await getAllDocuments(activeChat.value.deploymentConversationId)
+    const response = await getAllDocuments(activeChat.value.conversation_id)
     documentsUploaded.value = response.docInfos
   }
 
@@ -446,28 +412,20 @@ export function useChats() {
     }
     const request: DetachDocumentsRequest = {
       documentUploadIds: [docId],
-      deploymentConversationId: activeChat.value?.deploymentConversationId ?? '',
+      deploymentConversationId: activeChat.value?.conversation_id ?? '',
     }
     const response = await detachDocumentsConversation(request)
     documentsUploaded.value = response.docInfos
   }
 
   const startAiMessage = async (data: ChatResponseSegment, currentChatId: string) => {
-    const message: History = {
-      regenerateAttempt: 0,
-      inputParams: {
-        llmName: '',
-        forceRoutingType: null,
-      },
-      segments: [],
-      llmDisplayName: activeModel.value?.name || '',
-      llmBotIcon: '',
-      routedLlm: '',
-      role: 'BOT',
-      timestamp: new Date().toISOString(),
-      messageIndex: messages.value.length + 1,
-      text: '',
-      modelVersion: '',
+    const message: Message = {
+      message_id: '',
+      content: '',
+      role: 'assistant',
+      conversation_id: activeChat.value?.conversation_id || '',
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
     // const collapsibleComponent: ChatResponseSegment = {
     //   type: 'collapsible_component',
@@ -513,21 +471,13 @@ export function useChats() {
 
   const startUserMessage = async (content: string, currentChatId: string) => {
     try {
-      const message: History = {
-        regenerateAttempt: 0,
-        inputParams: {
-          llmName: '',
-          forceRoutingType: null,
-        },
-        segments: [],
-        llmDisplayName: '',
-        llmBotIcon: '',
-        routedLlm: '',
-        role: 'USER',
-        timestamp: new Date().toISOString(),
-        messageIndex: messages.value.length + 1,
-        text: content,
-        modelVersion: '',
+      const message: Message = {
+        message_id: '',
+        content: content,
+        role: 'user',
+        conversation_id: activeChat.value?.conversation_id || '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       }
       messages.value.push(message)
     } catch (error) {
@@ -539,51 +489,12 @@ export function useChats() {
     const aiMessage = ongoingAiMessages.value.get(currentChatId)
     if (aiMessage) {
       try {
-        if (data.type === 'collapsible_component') {
-          const collapsibleComponent: ChatResponseSegment = {
-            type: 'collapsible_component',
-            isSpinny: data.isSpinny,
-            // external: data.external,
-            segment: data.segment,
-            title: data.title,
-            isComplexSegment: data.isComplexSegment,
-            isCollapsed: data.isCollapsed,
-            isRouting: data.isRouting,
-            counter: data.counter,
-            message_id: data.message_id,
-            messageId: data.messageId,
-          }
-          aiMessage.segments.push(collapsibleComponent)
-        } else if (data.type === 'text' && data.temp == true) {
-            const textSegment: ChatResponseSegment = {
-              type: 'text',
-              temp: data.temp,
-              isSpinny: data.isSpinny,
-              segment: data.segment,
-              title: data.title,
-              isGeneratingImage: data.isGeneratingImage,
-              counter: data.counter,
-              message_id: data.message_id,
-              messageId: data.messageId
-            }
-            aiMessage.segments.push(textSegment)
-        } else if (data.type === 'text' && !data.temp) {
-          const lastSegment = aiMessage.segments[aiMessage.segments.length - 1]
-          if (lastSegment && lastSegment.type === 'text' && !lastSegment.temp && typeof lastSegment.segment === 'string') {
-            lastSegment.segment = lastSegment.segment + data.segment
-            lastSegment.messageId = data.messageId
-            lastSegment.counter = data.counter
-          } else {
-            const textSegment: ChatResponseSegment = {
-              type: 'text',
-              segment: data.segment,
-              counter: data.counter,
-              message_id: data.message_id,
-              messageId: data.messageId
-            }
-            aiMessage.segments.push(textSegment)
-          }
-        }
+        // aiMessage.message_id = ''
+        aiMessage.content += data.content
+        aiMessage.role = "assistant"
+        // aiMessage.conversation_id
+        // aiMessage.createdAt: Date
+        // aiMessage.updatedAt: Date
       } catch (error) {
         console.error('Failed to append to AI message:', error)
       }
@@ -593,12 +504,12 @@ export function useChats() {
   }
 
   const attachDocuments = async () => {
-    if (!activeChat.value || !activeChat.value.deploymentConversationId) {
+    if (!activeChat.value || !activeChat.value.conversation_id) {
       console.warn('There was no active chat.')
       return
     }
     const request: AttachDocumentsRequest = {
-      deploymentConversationId: activeChat.value.deploymentConversationId,
+      deploymentConversationId: activeChat.value.conversation_id,
       documentUploadIds: filesUploaded.value.map((file) => file.document_upload_id),
     }
     const response = await attachDocumentsToConversation(request)

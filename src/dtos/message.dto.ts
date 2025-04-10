@@ -1,20 +1,20 @@
 export interface Message {
-  messageId: string
+  message_id: string
   content: string
   role: 'user' | 'assistant'
-  conversationId: number
+  conversation_id: string
   createdAt: Date
   updatedAt: Date
 }
 
 export interface MessageChatRequest {
-  conversationId: number;
+  conversation_id: string;
   message: string;
-  userId: number;
+  user_id: string;
   stream?: boolean;
   temperature?: number;
-  maxTokens?: number;
-  topP?: number;
-  frequencyPenalty?: number;
-  presencePenalty?: number;
+  max_tokens?: number;
+  top_p?: number;
+  frequency_penalty?: number;
+  presence_penalty?: number;
 }

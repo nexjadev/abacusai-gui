@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { getApiUrl } from './appConfig'
 import { useNotification } from './notification'
 import * as forge from 'node-forge'
+import { User } from "../dtos/user.dto.ts";
 
 // Clave secreta para encriptación (en producción debería estar en variables de entorno)
 const ENCRYPTION_KEY = 'a8D3f5jXzQp2L9Nv'
@@ -131,12 +132,12 @@ export const refreshAuthToken = async (): Promise<string> => {
       throw new Error('No refresh token available')
     }
 
-    const response = await fetch(getApiUrl('/users/refresh-token'), {
+    const response = await fetch(getApiUrl('/auth/refresh-token'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ access_token: currentAccessToken, refresh_token: currentRefreshToken, token_type: 'Bearer' }),
+      body: JSON.stringify({ refresh_token: currentRefreshToken }),
     })
 
     if (!response.ok) {
@@ -146,10 +147,10 @@ export const refreshAuthToken = async (): Promise<string> => {
     }
 
     const data = await response.json()
-    setAuthToken(data.access_token, data.refresh_token)
+    setAuthToken(data.result.token, data.result.refresh_token)
     showSuccess('Token refrescado exitosamente', 'Autenticación')
     processQueue()
-    return data.access_token
+    return data.result.token
   } catch (error) {
     processQueue(error)
     throw error
@@ -207,14 +208,9 @@ interface LoginCredentials {
 }
 
 interface AuthResponse {
-  access_token: string
+  token: string
   refresh_token: string
-  token_type: string
-  user: {
-    id: string
-    username: string
-    // Agrega más campos según necesites
-  }
+  user: User
 }
 
 export const useAuth = () => {
@@ -225,16 +221,18 @@ export const useAuth = () => {
     try {
       // Encriptar credenciales antes de enviar
       const encryptedCredentials = {
-        username: encryptData(credentials.username),
-        password: encryptData(credentials.password),
+        // username: encryptData(credentials.username),
+        // password: encryptData(credentials.password),
+        username: credentials.username,
+        password: credentials.password,
         rememberMe: credentials.rememberMe
       }
 
-      const response = await fetch(getApiUrl('/users/login'), {
+      const response = await fetch(getApiUrl('/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-Encrypted': 'true' // Header para indicar que los datos están encriptados
+          //'X-Encrypted': 'true' // Header para indicar que los datos están encriptados
         },
         body: JSON.stringify(encryptedCredentials),
       })
@@ -245,12 +243,13 @@ export const useAuth = () => {
         return false
       }
 
-      const data: AuthResponse = await response.json()
+      const data = await response.json()
+      const result = data?.result as AuthResponse
 
       // Guardar ambos tokens
-      setAuthToken(data.access_token, data.refresh_token, credentials.rememberMe)
+      setAuthToken(result.token, result.refresh_token, credentials.rememberMe)
 
-      user.value = data.user
+      user.value = result.user
       isAuthenticated.value = true
 
       return true

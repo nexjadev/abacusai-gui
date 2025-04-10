@@ -4,7 +4,7 @@ import { useChats } from '../services/chat.ts'
 import { useAI } from '../services/useAi.ts'
 import { ref, computed } from 'vue'
 import { useConfig } from '../services/appConfig.ts'
-import type { ExternalApplication } from '../services/api.ts'
+import {LlmModel} from "../dtos/llm-model.dto.ts";
 
 const { activeChat, activeModel, switchModel, hasMessages } = useChats()
 const { refreshModels, availableModels } = useAI()
@@ -22,7 +22,8 @@ const tabs = [
 ]
 
 const filteredModels = computed(() => {
-  return (availableModels.value || []).filter((model: ExternalApplication) =>
+  console.log("availableModels.value ", availableModels.value)
+  return (availableModels.value || []).filter((model: LlmModel) =>
     model.name.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
@@ -33,11 +34,10 @@ const performRefreshModel = async () => {
   refreshingModel.value = false
 }
 
-const handleModelChange = (modelId: string) => {
-  console.log('switch', modelId)
-  const selectedModel = availableModels.value?.find(model => model.externalApplicationId === modelId)
+const handleModelChange = (llm_model_id: number) => {
+  const selectedModel = availableModels.value?.find(model => model.llm_model_id === llm_model_id)
   if (selectedModel) {
-    switchModel(selectedModel.deploymentId, selectedModel.externalApplicationId)
+    switchModel(selectedModel.llm_model_id)
     isOpen.value = false
   }
 }
@@ -122,15 +122,15 @@ const { disabled = false } = defineProps<Props>()
         <div class="flex flex-col gap-2 custom-scrollbar overflow-y-auto max-h-[calc(100vh-300px)]">
           <button
             v-for="model in filteredModels"
-            :key="model.externalApplicationId"
+            :key="model.llm_model_id"
             :disabled="disabled"
-            @click="handleModelChange(model.externalApplicationId)"
+            @click="handleModelChange(model.llm_model_id)"
             class="flex items-center gap-3 rounded-lg p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
-            :class="{ 'bg-purple-50 dark:bg-purple-900/20': model.externalApplicationId === activeModel?.externalApplicationId }"
+            :class="{ 'bg-purple-50 dark:bg-purple-900/20': model.llm_model_id === activeModel?.llm_model_id }"
           >
             <div class="flex h-7 w-7 items-center justify-center rounded-lg">
-              <img class="size-7 aspect-square rounded-full border border-gray-200 bg-white object-contain"
-                :src="getImageDictionary(model?.externalApplicationId || '')" :alt="model?.name || 'AI'" />
+<!--              <img class="size-7 aspect-square rounded-full border border-gray-200 bg-white object-contain"-->
+<!--                :src="getImageDictionary(model?.llmModelId || '')" :alt="model?.name || 'AI'" />-->
             </div>
             <div class="flex-1">
               <div class="text-sm font-medium">{{ model.name }}</div>

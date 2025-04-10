@@ -108,7 +108,7 @@ const groupedChats = computed(() => {
 
   // Usar filteredChats en lugar de chats.value
   filteredChats.value.forEach(chat => {
-    const chatDate = new Date(chat.createdAt)
+    const chatDate = new Date(chat.created_at)
     chatDate.setHours(0, 0, 0, 0)
 
     // Verificar si el chat pertenece a alguno de los grupos específicos

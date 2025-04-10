@@ -1,31 +1,36 @@
 import { Message } from "./message.dto";
 
 export interface Conversation {
-  conversationId: number;
-  userId: number;
+  conversation_id: string;
+  user_id: string;
   title: string;
-  llmModelId: number;
-  systemPromptId: number | null;
+  llm_model_id: string;
+  system_prompt_id: string | null;
   messages: Message[];
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export type CreateConversationRequest = {
   title: string;
-  user_id: number;
-  llm_model_id: number;
-  system_prompt_id: number | null;
+  user_id: string;
+  llm_model_id: string;
+  system_prompt_id: string | null;
 };
 
 export type TitleConversationRequest = {
-  conversation_id: number;
-  user_id: number;
+  conversation_id: string;
+  user_id: string;
   user_message: string;
 }
 
 export type RenameConversationRequest = {
-  conversation_id: number;
-  user_id: number;
+  conversation_id: string;
+  user_id: string;
   new_title: string;
+}
+
+export type DeleteConversationRequest = {
+  conversation_id: string;
+  user_id: string;
 }
