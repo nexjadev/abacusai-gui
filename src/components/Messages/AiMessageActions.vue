@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import markdownit from 'markdown-it'
 import highlightjs from 'markdown-it-highlightjs'
-import { History } from '../../services/api.ts'
 import { ref } from 'vue';
 import { useConfig } from '../../services/appConfig.ts'
 import { useChats } from '../../services/chat.ts'
+import { Message } from '../../dtos/message.dto.ts'
 
 const { messages, editUserMessage } = useChats()
 const { getRoutingDictionary, getImageDictionary } = useConfig()
 
 type Props = {
-    message: History
+    message: Message
 }
 
 const { message } = defineProps<Props>()
@@ -23,16 +23,10 @@ const copyToClipboard = async (type: 'raw' | 'rendered') => {
 
     if (type === 'raw') {
         // Copiar texto sin formato
-        text = message.segments
-            .filter(content => content.type === 'text' && !content.temp)
-            .map(content => content.segment)
-            .join('\n')
+        text = message.content
     } else {
         // Copiar texto con formato HTML renderizado
-        const markdownContent = message.segments
-            .filter(content => content.type === 'text' && !content.temp)
-            .map(content => content.segment)
-            .join('\n')
+        const markdownContent = message.content
 
         // Configuramos markdown-it para renderizar el contenido
         const md = markdownit({
@@ -81,10 +75,10 @@ const regenerateResponse = async () => {
     // Buscamos el último mensaje con rol "USER" en la lista de mensajes
     const lastUserMessage = [...messages.value]
         .reverse()
-        .find(msg => msg.role === "USER");
+        .find(msg => msg.role == "user");
 
-    if (lastUserMessage && lastUserMessage.text) {
-        await editUserMessage(lastUserMessage.text);
+    if (lastUserMessage && lastUserMessage.content) {
+        await editUserMessage(lastUserMessage.content);
     }
 }
 </script>

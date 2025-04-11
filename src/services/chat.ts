@@ -66,7 +66,7 @@ export function useChats() {
 
   const setActiveChat = (chat: Conversation) => {
     activeChat.value = chat
-    currentChatId.value = chat.conversation_id
+    currentChatId.value = chat.id
     if (chat.messages) {
       messages.value = chat.messages
     } else {
@@ -116,7 +116,7 @@ export function useChats() {
         if (activeChat.value) {
           await switchModel(activeChat.value.llm_model_id)
         }
-        const chatExists = chats.value.some((c) => c.conversation_id === chat.conversation_id)
+        const chatExists = chats.value.some((c) => c.id === chat.id)
         if (!chatExists) {
           chats.value.unshift(chat)
         }
@@ -138,7 +138,7 @@ export function useChats() {
   const switchModel = async (llmModelId: string) => {
     currentModelId.value = llmModelId
     try {
-      const model = availableModels.value.find((model) => model.llm_model_id == llmModelId)
+      const model = availableModels.value.find((model) => model.id == llmModelId)
       if (model) {
         setActiveModel(model)
       }
@@ -152,7 +152,7 @@ export function useChats() {
 
     activeChat.value.title = newTitle
     const request: RenameConversationRequest = {
-      conversation_id: currentModelId.value,
+      conversation_id: conversationId,
       user_id: "2",
       new_title: newTitle,
     }
@@ -162,10 +162,10 @@ export function useChats() {
 
   const startNewChat = async () => {
     const chat: Conversation = {
-      conversation_id: '',
+      id: '',
       user_id: '2',
       title: TITLE_CONVERSATION,
-      llm_model_id: activeModel.value?.llm_model_id || '',
+      llm_model_id: activeModel.value?.id || '',
       system_prompt_id: '',
       messages: [],
       created_at: new Date(),
@@ -179,7 +179,7 @@ export function useChats() {
 
   const createNewChat = async (name: string = TITLE_CONVERSATION) => {
     const newChat: CreateConversationRequest = {
-      llm_model_id: activeModel.value?.llm_model_id || '',
+      llm_model_id: activeModel.value?.id || '',
       title: name,
       user_id: '2',
       system_prompt_id: null,
@@ -219,7 +219,7 @@ export function useChats() {
       return
     }
 
-    const currentChatId = activeChat.value.conversation_id!
+    const currentChatId = activeChat.value.id!
     const message: MessageChatRequest = {
       conversation_id: currentChatId,
       message: content,
@@ -260,7 +260,7 @@ export function useChats() {
       return
     }
 
-    const currentChatId = activeChat.value.conversation_id!
+    const currentChatId = activeChat.value.id!
     const message: MessageChatRequest = {
       conversation_id: currentChatId,
       message: content,
@@ -359,7 +359,7 @@ export function useChats() {
 
       // Encontrar el índice del chat a eliminar
       const chatIndex = chats.value.findIndex(
-        (chat) => chat.conversation_id == conversationId,
+        (chat) => chat.id == conversationId,
       )
       if (chatIndex !== -1) {
         // Remover el chat de la lista
@@ -392,11 +392,11 @@ export function useChats() {
   }
 
   const getAllDocumentsUploaded = async () => {
-    if (!activeChat.value || !activeChat.value.conversation_id) {
+    if (!activeChat.value || !activeChat.value.id) {
       console.warn('There was no active chat.')
       return
     }
-    const response = await getAllDocuments(activeChat.value.conversation_id)
+    const response = await getAllDocuments(activeChat.value.id)
     documentsUploaded.value = response.docInfos
   }
 
@@ -412,7 +412,7 @@ export function useChats() {
     }
     const request: DetachDocumentsRequest = {
       documentUploadIds: [docId],
-      deploymentConversationId: activeChat.value?.conversation_id ?? '',
+      deploymentConversationId: activeChat.value?.id ?? '',
     }
     const response = await detachDocumentsConversation(request)
     documentsUploaded.value = response.docInfos
@@ -420,10 +420,10 @@ export function useChats() {
 
   const startAiMessage = async (data: ChatResponseSegment, currentChatId: string) => {
     const message: Message = {
-      message_id: '',
+      id: '',
       content: '',
       role: 'assistant',
-      conversation_id: activeChat.value?.conversation_id || '',
+      conversation_id: activeChat.value?.id || '',
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -472,10 +472,10 @@ export function useChats() {
   const startUserMessage = async (content: string, currentChatId: string) => {
     try {
       const message: Message = {
-        message_id: '',
+        id: '',
         content: content,
         role: 'user',
-        conversation_id: activeChat.value?.conversation_id || '',
+        conversation_id: activeChat.value?.id || '',
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -504,12 +504,12 @@ export function useChats() {
   }
 
   const attachDocuments = async () => {
-    if (!activeChat.value || !activeChat.value.conversation_id) {
+    if (!activeChat.value || !activeChat.value.id) {
       console.warn('There was no active chat.')
       return
     }
     const request: AttachDocumentsRequest = {
-      deploymentConversationId: activeChat.value.conversation_id,
+      deploymentConversationId: activeChat.value.id,
       documentUploadIds: filesUploaded.value.map((file) => file.document_upload_id),
     }
     const response = await attachDocumentsToConversation(request)

@@ -21,7 +21,7 @@ const handleUserScroll = () => {
 }
 
 const handleMessageUpdate = async (updatedMessage: any) => {
-  if (updatedMessage.role === 'USER') {
+  if (updatedMessage.role === 'user') {
     await editUserMessage(updatedMessage.text)
   }
 }
@@ -68,10 +68,6 @@ const visibleMessages = computed(() => {
       </p>
     </div>
     <DocumentsUploaded />
-    <ChatMessage
-      v-for="message in visibleMessages"
-      :message="message"
-      @update-message="handleMessageUpdate"
-    />
+    <ChatMessage v-for="message in visibleMessages" :message="message" @update-message="handleMessageUpdate" />
   </div>
 </template>

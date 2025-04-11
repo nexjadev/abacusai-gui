@@ -1,5 +1,5 @@
 export interface Message {
-  message_id: string
+  id: string
   content: string
   role: 'user' | 'assistant'
   conversation_id: string

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { avatarUrl, enableMarkdown } from '../../services/appConfig.ts'
 import Markdown from '../Markdown.ts'
-import { History } from '../../services/api.ts'
 import { ref, computed } from 'vue'
 import { useChats } from '../../services/chat.ts'
+import { Message } from '../../dtos/message.dto.ts'
 
 type Props = {
-  message: History
+  message: Message
 }
 
 const { message } = defineProps<Props>()
@@ -18,16 +18,16 @@ const editedText = ref('')
 const isHovered = ref(false)
 
 const hasTextChanged = computed(() => {
-  return editedText.value !== message.text
+  return editedText.value !== message.content
 })
 
 const isEditable = computed(() => {
-  const lastUserMessage = messages.value.slice().reverse().find(m => m.role === 'USER')
-  return lastUserMessage?.messageIndex === message.messageIndex
+  const lastUserMessage = messages.value.slice().reverse().find(m => m.role === 'user')
+  return lastUserMessage?.id == message.id
 })
 
 const startEditing = () => {
-  editedText.value = message.text
+  editedText.value = message.content
   isEditing.value = true
 }
 
@@ -86,13 +86,13 @@ const saveEdit = () => {
       <div class="flex justify-end rounded-xl bg-gray-100 dark:bg-gray-800 my-2 px-2 py-4 sm:px-4 flex flex-row">
         <div class="flex items-center justify-center max-w-3xl">
           <code v-if="!enableMarkdown" class="whitespace-pre-line text-gray-900 dark:text-gray-100">
-            {{ message.text }}
+            {{ message.content }}
           </code>
           <div
             v-else
             class="prose prose-base max-w-full dark:prose-invert prose-headings:font-semibold prose-h1:text-lg prose-h2:text-base prose-h3:text-base prose-p:text-gray-900 prose-p:first:mt-0 prose-a:text-blue-600 prose-code:text-sm prose-code:text-gray-900 prose-pre:p-2 dark:prose-p:text-gray-100 dark:prose-code:text-gray-100"
           >
-            <Markdown :source="message.text" />
+            <Markdown :source="message.content" />
           </div>
         </div>
         <img v-if="avatarUrl" class="ml-2 flex size-9 rounded-full sm:ml-4 bg-gray-200" :src="avatarUrl" />

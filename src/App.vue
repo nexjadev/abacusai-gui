@@ -16,7 +16,6 @@ import { IconMenu, IconPlus } from '@tabler/icons-vue'
 import { nextTick, onMounted, ref } from 'vue'
 import { useAI } from './services/useAi.ts'
 import { useChats } from './services/chat.ts'
-import { Conversation } from './services/api.ts'
 import { useAuth } from './services/auth.ts'
 
 const { refreshModels, availableModels } = useAI()
@@ -40,7 +39,7 @@ const initializeApp = async () => {
     if (currentModelId.value) {
       await switchModel(currentModelId.value)
     } else if (availableModels.value && availableModels.value.length > 0) {
-      await switchModel(availableModels.value[0].deploymentId, availableModels.value[0].externalApplicationId)
+      await switchModel(availableModels.value[0].id)
     } else {
       console.error('No hay modelos disponibles para inicializar la aplicación')
     }

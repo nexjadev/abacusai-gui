@@ -49,17 +49,17 @@ const onSubmit = async () => {
 
   if (isInputValid.value) {
     if (isSystemMessage.value) {
-      addSystemMessage(userInput.value.trim())
+      await addSystemMessage(userInput.value.trim())
     } else {
-      if (!activeChat.value?.deploymentConversationId) {
+      if (!activeChat.value?.id) {
         await createNewChat()
       }
-      await attachDocuments()
+      // await attachDocuments()
       addUserMessage(userInput.value.trim()).then(() => {
         isAiResponding.value = false
       })
-      clearUploadedFiles()
-      await getAllDocumentsUploaded()
+      // clearUploadedFiles()
+      // await getAllDocumentsUploaded()
     }
     userInput.value = ''
     if (!isSystemMessage.value) {
@@ -135,15 +135,15 @@ const handleFileSelect = async (event: Event) => {
   // Subir cada archivo válido
   for (const file of validFiles) {
     try {
-      const response = await uploadDataChat(
-        activeModel.value?.deploymentId ?? '',
-        activeChat.value?.deploymentConversationId ?? '',
-        file,
-      )
-      const document = await getOneDocumentUploaded(response.request_id)
-      if (document) {
-        filesUploaded.value.push(document)
-      }
+      // const response = await uploadDataChat(
+      //   activeModel.value?.deploymentId ?? '',
+      //   activeChat.value?.deploymentConversationId ?? '',
+      //   file,
+      // )
+      // const document = await getOneDocumentUploaded(response.request_id)
+      // if (document) {
+      //   filesUploaded.value.push(document)
+      // }
     } catch (error) {
       console.error('Error al subir el archivo:', error)
       alert(`Error al subir el archivo ${file.name}`)
@@ -202,18 +202,7 @@ const isImage = (file: File): boolean => {
           :disabled="isWebSearchActive"
           class="rounded-lg p-2 transition-colors duration-200 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-gray-700"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="22"
-            height="22"
-            viewBox="0 0 22 22"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            class="icon icon-tabler icons-tabler-outline icon-tabler-paperclip text-gray-900 dark:text-gray-100"
-          >
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-paperclip text-gray-900 dark:text-gray-100">
             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
             <path d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5"/>
           </svg>
@@ -238,19 +227,8 @@ const isImage = (file: File): boolean => {
               @click="handleUploadFromComputer"
               class="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700"
             >
-              <svg
-                class="mr-2 h-5 w-5 text-gray-900 dark:text-gray-100"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 22 22"
-                fill="none"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                />
+              <svg class="mr-2 h-5 w-5 text-gray-900 dark:text-gray-100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 22" fill="none" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
               Upload from computer
             </button>
@@ -270,18 +248,7 @@ const isImage = (file: File): boolean => {
           showAttachMenu ? 'cursor-not-allowed opacity-50' : '',
         ]"
       >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="24"
-          height="24"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="icon icon-tabler icons-tabler-outline icon-tabler-world-www text-gray-900 dark:text-gray-100"
-        >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-world-www text-gray-900 dark:text-gray-100">
           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
           <path d="M19.5 7a9 9 0 0 0 -7.5 -4a8.991 8.991 0 0 0 -7.484 4" />
           <path d="M11.5 3a16.989 16.989 0 0 0 -1.826 4" />
@@ -310,24 +277,10 @@ const isImage = (file: File): boolean => {
             <div
               class="bg-darkcolor/[0.07] hover:bg-darkcolor/[0.4] absolute inset-0 flex items-center justify-center rounded"
             >
-              <svg
-                aria-hidden="true"
-                focusable="false"
-                data-prefix="fas"
-                data-icon="xmark"
-                class="svg-inline--fa fa-xmark"
-                role="img"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 384 512"
-                style="transform-origin: 0.375em 0.5em"
-              >
+              <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="xmark" class="svg-inline--fa fa-xmark" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" style="transform-origin: 0.375em 0.5em">
                 <g transform="translate(192 256)">
                   <g transform="translate(0, 0)  scale(0.8125, 0.8125)  rotate(0 0 0)">
-                    <path
-                      fill="currentColor"
-                      d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"
-                      transform="translate(-192 -256)"
-                    ></path>
+                    <path fill="currentColor" d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" transform="translate(-192 -256)"></path>
                   </g>
                 </g>
               </svg>
@@ -341,12 +294,8 @@ const isImage = (file: File): boolean => {
               />
             </template>
             <template v-else>
-              <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file"
-                  class="svg-inline--fa fa-file w-4 h-4" role="img" xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 384 512">
-                  <path fill="currentColor"
-                      d="M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128z">
-                  </path>
+              <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="file" class="svg-inline--fa fa-file w-4 h-4" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512">
+                  <path fill="currentColor" d="M0 64C0 28.7 28.7 0 64 0H224V128c0 17.7 14.3 32 32 32H384V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V64zm384 64H256V0L384 128z"></path>
               </svg>
             </template>
           </div>

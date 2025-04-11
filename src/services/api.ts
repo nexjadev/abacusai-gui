@@ -294,7 +294,7 @@ export const useApi = () => {
   // titleConversation
   const titleConversation = async (request: TitleConversationRequest): Promise<void> => {
     const response = await fetchWithTokenRefresh(getApiUrl('/conversations/title'), {
-      method: 'POST',
+      method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })
@@ -306,10 +306,13 @@ export const useApi = () => {
 
   // Delete a Conversation
   const deleteConversation = async (request: DeleteConversationRequest): Promise<void> => {
-    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/delete'), {
-      method: 'POST',
+    const queryParams = new URLSearchParams({
+      conversation_id: request.conversation_id,
+      user_id: request.user_id,
+    });
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/delete?' + queryParams.toString()), {
+      method: 'DELETE',
       headers: getAuthHeaders(),
-      body: JSON.stringify(request),
     })
     const response_request: AbacusResponse<null> = await response.json()
     if (!response_request.success) {
@@ -320,7 +323,7 @@ export const useApi = () => {
   // Rename a Conversation
   const renameConversation = async (request: RenameConversationRequest): Promise<void> => {
     const response = await fetchWithTokenRefresh(getApiUrl('/conversations/rename'), {
-      method: 'POST',
+      method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })

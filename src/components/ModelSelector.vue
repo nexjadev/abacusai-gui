@@ -24,7 +24,7 @@ const tabs = [
 const filteredModels = computed(() => {
   console.log("availableModels.value ", availableModels.value)
   return (availableModels.value || []).filter((model: LlmModel) =>
-    model.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+    model.description.toLowerCase().includes(searchQuery.value.toLowerCase())
   )
 })
 
@@ -34,10 +34,10 @@ const performRefreshModel = async () => {
   refreshingModel.value = false
 }
 
-const handleModelChange = (llm_model_id: number) => {
-  const selectedModel = availableModels.value?.find(model => model.llm_model_id === llm_model_id)
+const handleModelChange = (llm_model_id: string) => {
+  const selectedModel = availableModels.value?.find(model => model.id == llm_model_id)
   if (selectedModel) {
-    switchModel(selectedModel.llm_model_id)
+    switchModel(selectedModel.id)
     isOpen.value = false
   }
 }
@@ -62,10 +62,10 @@ const { disabled = false } = defineProps<Props>()
     >
       <div class="flex h-7 w-7 items-center justify-center rounded-lg">
         <img class="size-7 aspect-square rounded-full border border-gray-200 bg-white object-contain"
-          :src="getImageDictionary(activeModel?.externalApplicationId || '')" :alt="activeModel?.name || 'AI'" />
+          :src="getImageDictionary(activeModel?.id || '')" :alt="activeModel?.description || 'AI'" />
       </div>
       <div class="flex-1">
-        <div class="text-sm font-medium">{{ activeModel?.name || 'Select a model' }}</div>
+        <div class="text-sm font-medium">{{ activeModel?.description || 'Select a model' }}</div>
       </div>
       <svg
         class="h-5 w-5 transform text-gray-400 transition-transform"
@@ -122,18 +122,18 @@ const { disabled = false } = defineProps<Props>()
         <div class="flex flex-col gap-2 custom-scrollbar overflow-y-auto max-h-[calc(100vh-300px)]">
           <button
             v-for="model in filteredModels"
-            :key="model.llm_model_id"
+            :key="model.id"
             :disabled="disabled"
-            @click="handleModelChange(model.llm_model_id)"
+            @click="handleModelChange(model.id)"
             class="flex items-center gap-3 rounded-lg p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700"
-            :class="{ 'bg-purple-50 dark:bg-purple-900/20': model.llm_model_id === activeModel?.llm_model_id }"
+            :class="{ 'bg-purple-50 dark:bg-purple-900/20': model.id === activeModel?.id }"
           >
             <div class="flex h-7 w-7 items-center justify-center rounded-lg">
 <!--              <img class="size-7 aspect-square rounded-full border border-gray-200 bg-white object-contain"-->
 <!--                :src="getImageDictionary(model?.llmModelId || '')" :alt="model?.name || 'AI'" />-->
             </div>
             <div class="flex-1">
-              <div class="text-sm font-medium">{{ model.name }}</div>
+              <div class="text-sm font-medium">{{ model.description }}</div>
             </div>
           </button>
         </div>

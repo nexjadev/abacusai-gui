@@ -1,6 +1,6 @@
 export interface LlmModel {
-    llm_model_id: string;
-    name: string;
+    id: string;
+    model: string;
     description: string;
     createdAt: Date;
     updatedAt: Date;

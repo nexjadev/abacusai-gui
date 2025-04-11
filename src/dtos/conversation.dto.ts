@@ -1,7 +1,7 @@
 import { Message } from "./message.dto";
 
 export interface Conversation {
-  conversation_id: string;
+  id: string;
   user_id: string;
   title: string;
   llm_model_id: string;

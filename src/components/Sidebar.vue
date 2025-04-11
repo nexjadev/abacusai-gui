@@ -20,11 +20,11 @@ import {
   toggleSystemPromptPanel,
 } from '../services/appConfig.ts'
 import { useChats } from '../services/chat.ts'
-import { Conversation } from '../services/api.ts'
 import { computed, ref, onMounted } from 'vue'
 import { useInfiniteScroll } from '../composables/useInfiniteScroll'
 import { useAuth } from '../services/auth.ts'
 import AlertDialog from './AlertDialog.vue'
+import { Conversation } from '../dtos/conversation.dto.ts'
 
 // Definir tipos para los elementos de la lista plana
 type HeaderItem = {
@@ -47,11 +47,11 @@ const newChatName = ref('')
 const searchTerm = ref('')
 
 const showDeleteAlert = ref(false)
-const chatToDelete = ref<{ deploymentId: string; deploymentConversationId: string } | null>(null)
+const chatToDelete = ref<{ conversationId: string } | null>(null)
 
-const onSwitchChat = async (deploymentConversationId: string) => {
+const onSwitchChat = async (conversationId: string) => {
   checkSystemPromptPanel()
-  await switchChat(deploymentConversationId)
+  await switchChat(conversationId)
   clearUploadedFiles()
   await getAllDocumentsUploaded()
 }
@@ -77,7 +77,7 @@ const filteredChats = computed(() => {
   }
   const term = searchTerm.value.toLowerCase().trim()
   return chats.value.filter(chat =>
-    chat.name.toLowerCase().includes(term)
+    chat.title.toLowerCase().includes(term)
   )
 })
 
@@ -207,14 +207,14 @@ const onScroll = async (event: Event) => {
   })
 }
 
-const handleDeleteClick = (deploymentId: string, deploymentConversationId: string) => {
-  chatToDelete.value = { deploymentId, deploymentConversationId }
+const handleDeleteClick = (conversationId: string) => {
+  chatToDelete.value = { conversationId }
   showDeleteAlert.value = true
 }
 
 const handleDeleteConfirm = () => {
   if (chatToDelete.value) {
-    deleteChat(chatToDelete.value.deploymentId, chatToDelete.value.deploymentConversationId)
+    deleteChat(chatToDelete.value.conversationId)
     chatToDelete.value = null
   }
 }
@@ -256,27 +256,27 @@ const handleDeleteConfirm = () => {
             <!-- Elemento de chat (interactivo) -->
             <div
               v-else-if="item.type === 'chat'"
-              @click="onSwitchChat((item as ChatItem).chat.deploymentConversationId!)"
+              @click="onSwitchChat((item as ChatItem).chat.id!)"
               :class="{
-                'bg-purple-100 dark:bg-purple-900': activeChat?.deploymentConversationId === (item as ChatItem).chat.deploymentConversationId
+                'bg-purple-100 dark:bg-purple-900': activeChat?.id == (item as ChatItem).chat.id
               }"
               class="group flex items-center justify-between rounded-md px-3 py-2 hover:bg-gray-200 dark:hover:bg-gray-800 cursor-pointer"
             >
-              <span v-if="editingChatId !== (item as ChatItem).chat.deploymentConversationId" class="text-sm text-gray-900 dark:text-gray-100">{{ (item as ChatItem).chat.name }}</span>
-              <div v-if="activeChat?.deploymentConversationId === (item as ChatItem).chat.deploymentConversationId" class="flex items-center space-x-1">
-                <div v-if="editingChatId === (item as ChatItem).chat.deploymentConversationId" class="flex items-center space-x-1">
+              <span v-if="editingChatId !== (item as ChatItem).chat.id" class="text-sm text-gray-900 dark:text-gray-100">{{ (item as ChatItem).chat.title }}</span>
+              <div v-if="activeChat?.id == (item as ChatItem).chat.id" class="flex items-center space-x-1">
+                <div v-if="editingChatId == (item as ChatItem).chat.id" class="flex items-center space-x-1">
                   <input
                     v-model="newChatName"
                     type="text"
                     class="w-full rounded border border-gray-300 px-2 py-1 text-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
-                    @keyup.enter="confirmRename((item as ChatItem).chat.deploymentConversationId!)"
+                    @keyup.enter="confirmRename((item as ChatItem).chat.id!)"
                     @keyup.esc="cancelEditing()"
                     ref="editInput"
                     autofocus
                   />
                   <button
                     class="text-green-500 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300"
-                    @click.stop="confirmRename((item as ChatItem).chat.deploymentConversationId!)"
+                    @click.stop="confirmRename((item as ChatItem).chat.id!)"
                   >
                     <IconCheck class="h-4 w-4" />
                   </button>
@@ -288,10 +288,10 @@ const handleDeleteConfirm = () => {
                   </button>
                 </div>
                 <template v-else>
-                  <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="startEditing((item as ChatItem).chat.deploymentConversationId!, (item as ChatItem).chat.name)">
+                  <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="startEditing((item as ChatItem).chat.id!, (item as ChatItem).chat.title)">
                     <IconPencil class="h-4 w-4" />
                   </button>
-                  <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="handleDeleteClick((item as ChatItem).chat.deploymentId!, (item as ChatItem).chat.deploymentConversationId!)">
+                  <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300" @click.stop="handleDeleteClick((item as ChatItem).chat.id!)">
                     <IconTrashX class="h-4 w-4" />
                   </button>
                 </template>
