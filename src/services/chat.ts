@@ -4,6 +4,7 @@ import {
   useConfig,
   currentChatId,
   historyChatLength,
+  currentUserId,
 } from './appConfig.ts'
 import { useAI } from './useAi.ts'
 import {
@@ -102,7 +103,7 @@ export function useChats() {
 
   const getChats = async () => {
     try {
-      chats.value = await getAllChats("2", historyChatLength.value.toString(),)
+      chats.value = await getAllChats(currentUserId.value, historyChatLength.value.toString(),)
     } catch (error) {
       console.error('Failed to get chats:', error)
     }
@@ -110,7 +111,7 @@ export function useChats() {
 
   const switchChat = async (conversationId: string) => {
     try {
-      const chat = await getChat(conversationId, "2")
+      const chat = await getChat(conversationId, currentUserId.value)
       if (chat) {
         setActiveChat(chat)
         if (activeChat.value) {
@@ -153,7 +154,7 @@ export function useChats() {
     activeChat.value.title = newTitle
     const request: RenameConversationRequest = {
       conversation_id: conversationId,
-      user_id: "2",
+      user_id: currentUserId.value,
       new_title: newTitle,
     }
     await renameConversation(request)
@@ -223,7 +224,8 @@ export function useChats() {
     const message: MessageChatRequest = {
       conversation_id: currentChatId,
       message: content,
-      user_id: "2",
+      user_id: currentUserId.value,
+      llm_model_id: currentModelId.value,
     }
     // if (filesUploaded.value.length > 0) {
     //   message.docInfos = filesUploaded.value
@@ -240,7 +242,9 @@ export function useChats() {
         (data: ChatResponseSegment) => handleAiPartialResponse(data, currentChatId),
         (data: ChatFinalResponse) => handleAiCompletion(data, currentChatId),
       )
-      await updateChatTitle(currentChatId, content)
+      if (messages.value.length <= 2) {
+        await updateChatTitle(currentChatId, content)
+      }
       await switchChat(currentChatId)
     } catch (error) {
       if (error instanceof Error) {
@@ -264,7 +268,8 @@ export function useChats() {
     const message: MessageChatRequest = {
       conversation_id: currentChatId,
       message: content,
-      user_id: "2",
+      user_id: currentUserId.value,
+      llm_model_id: currentModelId.value,
       // editPrompt: true,
       // regenerate: true,
     }
@@ -322,11 +327,11 @@ export function useChats() {
   async function updateChatTitle(conversationId: string, userMessage: string) {
     const request: TitleConversationRequest = {
       conversation_id: conversationId,
-      user_id: "2",
+      user_id: currentUserId.value,
       user_message: userMessage
     }
     await titleConversation(request)
-    const chat = await getChat(conversationId, "2")
+    const chat = await getChat(conversationId, currentUserId.value)
     if (chat) {
       setActiveChat(chat)
     }
@@ -353,7 +358,7 @@ export function useChats() {
     try {
       const request: DeleteConversationRequest = {
         conversation_id: conversationId,
-        user_id: "2",
+        user_id: currentUserId.value,
       }
       await deleteConversation(request)
 
@@ -424,6 +429,7 @@ export function useChats() {
       content: '',
       role: 'assistant',
       conversation_id: activeChat.value?.id || '',
+      llm_model_id: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
@@ -476,6 +482,7 @@ export function useChats() {
         content: content,
         role: 'user',
         conversation_id: activeChat.value?.id || '',
+        llm_model_id: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       }

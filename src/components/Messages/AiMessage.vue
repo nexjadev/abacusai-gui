@@ -6,9 +6,11 @@ import { useConfig } from '../../services/appConfig.ts'
 import { useChats } from '../../services/chat.ts'
 import AiMessageActions from './AiMessageActions.vue'
 import { Message } from '../../dtos/message.dto.ts'
+import { useAI } from '../../services/useAi.ts'
 
 const { getRoutingDictionary, getNickImageDictionary } = useConfig()
 const { activeModel, messages } = useChats()
+const { availableModels } = useAI()
 
 type Props = {
   message: Message
@@ -22,12 +24,17 @@ const isLastBotMessage = computed(() => {
   const firstBotIndex = reversedMessages.findIndex(m => m.role == 'assistant')
   return firstBotIndex !== -1 && reversedMessages[firstBotIndex].id === message.id
 })
+
+const getLlmModel = (llm_model_id: string) => {
+  const model = availableModels.value.find((m) => m.id == llm_model_id)
+  return model ? model : null
+}
 </script>
 
 <template>
   <div class="flex rounded-xl max-w-5xl mx-auto px-2 py-6 dark:bg-gray-800 sm:px-4">
-<!--    <img :src="getNickImageDictionary(message.llmBotIcon || '')" :alt="message.llmDisplayName || 'AI'"-->
-<!--      class="mr-2 mt-7 flex size-9 aspect-square rounded-full border border-gray-200 bg-white object-contain sm:mr-4"/>-->
+    <img class="mr-2 mt-7 flex size-9 aspect-square rounded-full border border-gray-200 bg-white object-contain sm:mr-4"
+         :src="getLlmModel(message.llm_model_id ?? '')?.image_url ?? 'nope-not-here.webp'" :alt="getLlmModel(message.llm_model_id ?? '')?.description || 'Not Found Image'" />
     <div class="flex flex-col rounded-xl w-full">
       <!-- Contenido normal -->
       <div class="prose prose-base max-w-full dark:prose-invert">

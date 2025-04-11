@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { getApiUrl } from './appConfig'
+import { currentUserId, getApiUrl } from './appConfig'
 import { useNotification } from './notification'
 import * as forge from 'node-forge'
 import { User } from "../dtos/user.dto.ts";
@@ -250,6 +250,7 @@ export const useAuth = () => {
       setAuthToken(result.token, result.refresh_token, credentials.rememberMe)
 
       user.value = result.user
+      currentUserId.value =  result.user.id
       isAuthenticated.value = true
 
       return true

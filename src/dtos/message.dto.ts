@@ -3,6 +3,7 @@ export interface Message {
   content: string
   role: 'user' | 'assistant'
   conversation_id: string
+  llm_model_id: string | null
   createdAt: Date
   updatedAt: Date
 }
@@ -11,10 +12,5 @@ export interface MessageChatRequest {
   conversation_id: string;
   message: string;
   user_id: string;
-  stream?: boolean;
-  temperature?: number;
-  max_tokens?: number;
-  top_p?: number;
-  frequency_penalty?: number;
-  presence_penalty?: number;
+  llm_model_id: string;
 }

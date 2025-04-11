@@ -5,6 +5,7 @@ import { Config, db } from './database.ts'
 
 export const currentModelId = useLocalStorage('currentModelId', '')
 export const currentChatId = useLocalStorage('currentChatId', '')
+export const currentUserId = useLocalStorage('currentUserId', '')
 export const gravatarEmail = useLocalStorage('gravatarEmail', '')
 export const historyChatLength = useLocalStorage('historyChatLength', 30)
 export const avatarUrl = computed(() => gravatarEmail.value

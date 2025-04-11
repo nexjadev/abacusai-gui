@@ -62,7 +62,7 @@ const { disabled = false } = defineProps<Props>()
     >
       <div class="flex h-7 w-7 items-center justify-center rounded-lg">
         <img class="size-7 aspect-square rounded-full border border-gray-200 bg-white object-contain"
-          :src="getImageDictionary(activeModel?.id || '')" :alt="activeModel?.description || 'AI'" />
+          :src="activeModel?.image_url ?? 'nope-not-here.webp'" :alt="activeModel?.description || 'Not Found Image'" />
       </div>
       <div class="flex-1">
         <div class="text-sm font-medium">{{ activeModel?.description || 'Select a model' }}</div>
@@ -129,8 +129,8 @@ const { disabled = false } = defineProps<Props>()
             :class="{ 'bg-purple-50 dark:bg-purple-900/20': model.id === activeModel?.id }"
           >
             <div class="flex h-7 w-7 items-center justify-center rounded-lg">
-<!--              <img class="size-7 aspect-square rounded-full border border-gray-200 bg-white object-contain"-->
-<!--                :src="getImageDictionary(model?.llmModelId || '')" :alt="model?.name || 'AI'" />-->
+              <img class="size-7 aspect-square rounded-full border border-gray-200 bg-white object-contain"
+                   :src="model.image_url ?? 'nope-not-here.webp'" :alt="model.description || 'Not Found Image'" />
             </div>
             <div class="flex-1">
               <div class="text-sm font-medium">{{ model.description }}</div>
