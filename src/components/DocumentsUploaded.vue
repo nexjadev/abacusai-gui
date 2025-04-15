@@ -22,7 +22,7 @@ const isImage = (mimeType: string) => {
                 class="-translate-y-1/3 translate-x-1/3 invisible group-hover:visible absolute right-0 top-0 size-4 rounded bg-darkcoloro border border-darkcolor/[0.4] cursor-pointer">
                 <div
                     class="absolute inset-0 flex items-center justify-center bg-darkcolor/[0.07] rounded hover:bg-darkcolor/[0.4]"
-                    @click="detachDocuments(file.document_upload_id)">
+                    @click="detachDocuments(file.id)">
                     <svg aria-hidden="true" focusable="false" data-prefix="fas" data-icon="xmark"
                         class="svg-inline--fa fa-xmark" role="img" xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 384 512" style="transform-origin: 0.375em 0.5em;">
@@ -38,8 +38,8 @@ const isImage = (mimeType: string) => {
             </div>
             <div class="flex !size-8 bg-gray-500 rounded-lg items-center justify-center text-white">
                 <!-- Mostrar imagen solo si el archivo es una imagen -->
-                <img v-if="isImage(file.mime_type)"
-                     :src="getDocumentDownloadUrl(file.doc_id)"
+                <img v-if="isImage(file.file_type)"
+                     :src="file.file_path"
                      alt="Imagen"
                      class="h-full" />
 
@@ -54,9 +54,9 @@ const isImage = (mimeType: string) => {
             </div>
             <div class="flex-1 min-w-0 ms-[6px] ml-[8px]">
                 <p class="text-xs font-medium text-gray-900 truncate dark:text-white max-w-[190px] text-ellipsis">
-                    {{ file.filename }}</p>
+                    {{ file.file_name }}</p>
                 <p class="text-xs text-gray-400 truncate dark:text-gray-300">{{
-                    file.mime_type.split('/')[1].toUpperCase() }}</p>
+                    file.file_type.split('/')[1].toUpperCase() }}</p>
             </div>
         </div>
     </div>

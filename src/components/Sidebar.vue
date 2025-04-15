@@ -39,7 +39,7 @@ type ChatItem = {
 
 type FlattenedItem = HeaderItem | ChatItem
 
-const { chats, activeChat, switchChat, deleteChat, renameChat, getChats, getAllDocumentsUploaded, clearUploadedFiles } = useChats()
+const { chats, activeChat, switchChat, deleteChat, renameChat, getChats, getAllDocumentsUploaded, filesUploaded, documentsUploaded } = useChats()
 const { logout } = useAuth()
 
 const editingChatId = ref<string | null>(null)
@@ -52,7 +52,8 @@ const chatToDelete = ref<{ conversationId: string } | null>(null)
 const onSwitchChat = async (conversationId: string) => {
   checkSystemPromptPanel()
   await switchChat(conversationId)
-  clearUploadedFiles()
+  filesUploaded.value = []
+  documentsUploaded.value = []
   await getAllDocumentsUploaded()
 }
 

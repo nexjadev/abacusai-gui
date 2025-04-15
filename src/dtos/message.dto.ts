@@ -13,4 +13,5 @@ export interface MessageChatRequest {
   message: string;
   user_id: string;
   llm_model_id: string;
+  document_ids?: string[];
 }

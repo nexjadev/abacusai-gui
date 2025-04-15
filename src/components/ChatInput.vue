@@ -4,7 +4,6 @@ import { useTextareaAutosize } from '@vueuse/core'
 import { useChats } from '../services/chat.ts'
 import { showSystem } from '../services/appConfig.ts'
 import { IconPlayerStopFilled, IconSend, IconWhirl } from '@tabler/icons-vue'
-import { DocumentFile } from '../services/api.ts'
 import { useApi } from '../services/api.ts'
 
 const { textarea, input: userInput } = useTextareaAutosize({ input: '' })
@@ -19,10 +18,8 @@ const {
   isWebSearchActive,
   forceRoutingAction,
   getOneDocumentUploaded,
-  detachDocuments,
   createNewChat,
   getAllDocumentsUploaded,
-  clearUploadedFiles,
   attachDocuments,
 } = useChats()
 
@@ -54,12 +51,12 @@ const onSubmit = async () => {
       if (!activeChat.value?.id) {
         await createNewChat()
       }
-      // await attachDocuments()
+      await attachDocuments()
       addUserMessage(userInput.value.trim()).then(() => {
         isAiResponding.value = false
       })
-      // clearUploadedFiles()
-      // await getAllDocumentsUploaded()
+      filesUploaded.value = []
+      await getAllDocumentsUploaded()
     }
     userInput.value = ''
     if (!isSystemMessage.value) {
@@ -135,15 +132,11 @@ const handleFileSelect = async (event: Event) => {
   // Subir cada archivo válido
   for (const file of validFiles) {
     try {
-      // const response = await uploadDataChat(
-      //   activeModel.value?.deploymentId ?? '',
-      //   activeChat.value?.deploymentConversationId ?? '',
-      //   file,
-      // )
-      // const document = await getOneDocumentUploaded(response.request_id)
-      // if (document) {
-      //   filesUploaded.value.push(document)
-      // }
+      const response = await uploadDataChat(activeModel.value?.id ?? '', activeChat.value?.id ?? '', file)
+      const document = await getOneDocumentUploaded(response.id)
+      if (document) {
+        filesUploaded.value.push(document)
+      }
     } catch (error) {
       console.error('Error al subir el archivo:', error)
       alert(`Error al subir el archivo ${file.name}`)
@@ -270,7 +263,6 @@ const isImage = (file: File): boolean => {
           <div
             class="bg-darkcoloro border-darkcolor/[0.4] invisible absolute right-0 top-0 size-4 -translate-y-1/3 translate-x-1/3 cursor-pointer rounded border group-hover:visible"
             @click="
-              detachDocuments(file.document_upload_id);
               filesUploaded.splice(index, 1)
             "
           >
@@ -287,9 +279,9 @@ const isImage = (file: File): boolean => {
             </div>
           </div>
           <div class="flex !size-8 items-center justify-center rounded-lg bg-gray-500 text-white">
-            <template v-if="file.mime_type.startsWith('image/')">
+            <template v-if="file.file_type.startsWith('image/')">
               <img
-                :src="getDocumentDownloadUrl(file.doc_id)" alt="Image"
+                :src="file.file_path" alt="Image"
                 style="width: 30px; height: 30px; border-radius: 8px"
               />
             </template>
@@ -303,10 +295,10 @@ const isImage = (file: File): boolean => {
             <p
               class="max-w-[190px] truncate text-ellipsis text-xs font-medium text-gray-900 dark:text-white"
             >
-              {{ file.filename }}
+              {{ file.file_name }}
             </p>
             <p class="truncate text-xs text-gray-400 dark:text-gray-300">
-              {{ file.mime_type.split('/')[1].toUpperCase() }}
+              {{ file.file_type.split('/')[1].toUpperCase() }}
             </p>
           </div>
         </div>

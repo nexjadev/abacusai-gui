@@ -8,16 +8,13 @@ import {
 } from './appConfig.ts'
 import { useAI } from './useAi.ts'
 import {
-  AttachDocumentsRequest,
-  DetachDocumentsRequest,
-  DocumentFile,
-  UploadDataConversationResponse,
   useApi,
 } from './api.ts'
 import {LlmModel} from "../dtos/llm-model.dto.ts";
 import {Conversation, CreateConversationRequest, DeleteConversationRequest, RenameConversationRequest, TitleConversationRequest} from "../dtos/conversation.dto.ts";
 import {Message, MessageChatRequest} from "../dtos/message.dto.ts";
 import {ChatFinalResponse, ChatResponseSegment} from "../dtos/steam-message.dto.ts";
+import { AttachDocumentsRequest, DetachDocumentsRequest, DocumentResponse } from '../dtos/document.dto.ts';
 
 const chats = ref<Conversation[]>([])
 const activeChat = ref<Conversation | null>(null)
@@ -26,15 +23,10 @@ const messages = ref<Message[]>([])
 const systemPrompt = ref<Message>()
 const ongoingAiMessages = ref<Map<string, Message>>(new Map())
 const TITLE_CONVERSATION = 'New Chat'
-const documentsUploaded = ref<DocumentFile[]>([])
-const filesUploaded = ref<DocumentFile[]>([])
+const documentsUploaded = ref<DocumentResponse[]>([])
+const filesUploaded = ref<DocumentResponse[]>([])
 const isWebSearchActive = ref<boolean>(false)
 const forceRoutingAction = ref<boolean>(false)
-
-const clearUploadedFiles = () => {
-  filesUploaded.value = []
-  documentsUploaded.value = []
-}
 
 // Función auxiliar para determinar si un mensaje es editable
 const isMessageEditable = (message: Message): boolean => {
@@ -57,8 +49,8 @@ export function useChats() {
     renameConversation,
     uploadDataConversation,
     getAllDocuments,
-    detachDocumentsConversation,
     getOneDocument,
+    detachDocumentsConversation,
     attachDocumentsToConversation,
   } = useApi()
 
@@ -164,7 +156,7 @@ export function useChats() {
   const startNewChat = async () => {
     const chat: Conversation = {
       id: '',
-      user_id: '2',
+      user_id: currentUserId.value,
       title: TITLE_CONVERSATION,
       llm_model_id: activeModel.value?.id || '',
       system_prompt_id: '',
@@ -175,14 +167,15 @@ export function useChats() {
 
     setActiveChat(chat)
     await addSystemMessage(await useConfig().getCurrentSystemMessage())
-    clearUploadedFiles()
+    filesUploaded.value = []
+    documentsUploaded.value = []
   }
 
   const createNewChat = async (name: string = TITLE_CONVERSATION) => {
     const newChat: CreateConversationRequest = {
-      llm_model_id: activeModel.value?.id || '',
+      llm_model_id: currentModelId.value,
       title: name,
-      user_id: '2',
+      user_id: currentUserId.value,
       system_prompt_id: null,
     }
 
@@ -190,7 +183,8 @@ export function useChats() {
       const newConversation = await createConversation(newChat)
       setActiveChat(newConversation)
       await addSystemMessage(await useConfig().getCurrentSystemMessage())
-      // clearUploadedFiles()
+      filesUploaded.value = []
+      // documentsUploaded.value = []
     } catch (error) {
       console.error('Failed to start a new chat:', error)
     }
@@ -227,9 +221,9 @@ export function useChats() {
       user_id: currentUserId.value,
       llm_model_id: currentModelId.value,
     }
-    // if (filesUploaded.value.length > 0) {
-    //   message.docInfos = filesUploaded.value
-    // }
+    if (filesUploaded.value.length > 0) {
+      message.document_ids = filesUploaded.value.map((file) => file.id)
+    }
 
     // if (isWebSearchActive.value) {
     //   message.forceRoutingAction = 'WEB_SEARCH'
@@ -377,15 +371,9 @@ export function useChats() {
     }
   }
 
-  const uploadDataChat = async (
-    deploymentId: string,
-    deploymentConversationId: string,
-    file: File,
-  ): Promise<UploadDataConversationResponse> => {
+  const uploadDataChat = async (llmModelId: string, conversationId: string, file: File): Promise<DocumentResponse> => {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('deploymentId', deploymentId)
-    formData.append('deploymentConversationId', deploymentConversationId)
 
     try {
       const response = await uploadDataConversation(formData)
@@ -397,17 +385,15 @@ export function useChats() {
   }
 
   const getAllDocumentsUploaded = async () => {
-    if (!activeChat.value || !activeChat.value.id) {
+    if (!activeChat.value) {
       console.warn('There was no active chat.')
       return
     }
-    const response = await getAllDocuments(activeChat.value.id)
-    documentsUploaded.value = response.docInfos
+    documentsUploaded.value = await getAllDocuments(activeChat.value.id)
   }
 
-  const getOneDocumentUploaded = async (requestId: string): Promise<DocumentFile | null> => {
-    const response = await getOneDocument(requestId)
-    return response.docInfos ? response.docInfos[0] : null
+  const getOneDocumentUploaded = async (documentId: string): Promise<DocumentResponse | null> => {
+    return await getOneDocument(documentId)
   }
 
   const detachDocuments = async (docId: string) => {
@@ -416,11 +402,10 @@ export function useChats() {
       return
     }
     const request: DetachDocumentsRequest = {
-      documentUploadIds: [docId],
-      deploymentConversationId: activeChat.value?.id ?? '',
+      conversation_id: activeChat.value?.id ?? '',
+      document_ids: [docId],
     }
-    const response = await detachDocumentsConversation(request)
-    documentsUploaded.value = response.docInfos
+    documentsUploaded.value = await detachDocumentsConversation(request)
   }
 
   const startAiMessage = async (data: ChatResponseSegment, currentChatId: string) => {
@@ -511,15 +496,30 @@ export function useChats() {
   }
 
   const attachDocuments = async () => {
-    if (!activeChat.value || !activeChat.value.id) {
+    if (!activeChat.value) {
       console.warn('There was no active chat.')
       return
     }
-    const request: AttachDocumentsRequest = {
-      deploymentConversationId: activeChat.value.id,
-      documentUploadIds: filesUploaded.value.map((file) => file.document_upload_id),
+    if (!filesUploaded.value || filesUploaded.value.length === 0) {
+      console.warn('No hay documentos a adjuntar')
+      return
     }
-    const response = await attachDocumentsToConversation(request)
+
+    const documentIds = filesUploaded.value
+      .filter(file => file && file.id) // Aseguramos que solo incluimos archivos con id
+      .map(file => file.id)
+
+    if (documentIds.length === 0) {
+      console.warn('No se encontraron IDs válidos en los archivos subidos')
+      return
+    }
+
+    const request: AttachDocumentsRequest = {
+      conversation_id: activeChat.value.id,
+      document_ids: documentIds,
+    }
+
+    await attachDocumentsToConversation(request)
   }
 
   return {
@@ -553,7 +553,6 @@ export function useChats() {
     getAllDocumentsUploaded,
     getOneDocumentUploaded,
     detachDocuments,
-    clearUploadedFiles,
     attachDocuments,
   }
 }

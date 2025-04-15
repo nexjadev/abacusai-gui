@@ -5,15 +5,8 @@ import { MessageChatRequest } from '../dtos/message.dto';
 import {StreamMessage} from "../dtos/steam-message.dto.ts";
 import {LlmModel} from "../dtos/llm-model.dto.ts";
 import {Conversation, CreateConversationRequest, DeleteConversationRequest, RenameConversationRequest, TitleConversationRequest} from "../dtos/conversation.dto.ts";
+import { AttachDocumentsRequest, DetachDocumentsRequest, DocumentResponse } from '../dtos/document.dto.ts';
 
-export type DetachDocumentsRequest = {
-  documentUploadIds: string[];
-  deploymentConversationId: string;
-}
-
-export type UploadDataConversationResponse = {
-  request_id: string;
-}
 
 type InputParams = {
   llmName: string | null;
@@ -91,30 +84,6 @@ export type ChatResponseSubSegment = {
   is_spinny: boolean;
   title: string;
   is_generating_image: boolean;
-}
-
-export type DocumentFile = {
-  doc_id: string;
-  filename: string;
-  mime_type: string;
-  uploaded_at: string;
-  size: number;
-  page_count: number | null;
-  document_upload_id: string;
-  processing_error: string | null;
-  created_at: string;
-  metadata: Record<string, unknown>;
-  message_index: number | null;
-};
-
-export type ListFilesResponse = {
-  docInfos: DocumentFile[];
-  maxCount: number;
-}
-
-export type AttachDocumentsRequest = {
-  deploymentConversationId: string;
-  documentUploadIds: string[];
 }
 
 const abortController = ref<AbortController>(new AbortController())
@@ -334,68 +303,59 @@ export const useApi = () => {
   }
 
   // Upload a file to a Conversation
-  const uploadDataConversation = async (formData: FormData): Promise<UploadDataConversationResponse> => {
+  const uploadDataConversation = async (formData: FormData): Promise<DocumentResponse> => {
     const headers = getAuthHeaders()
     headers.delete('Content-Type');
 
-    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/upload-data'), {
+    const response = await fetchWithTokenRefresh(getApiUrl('/documents'), {
       method: 'POST',
       headers,
       body: formData,
     })
-    const response_request: UploadDataConversationResponse = await response.json()
-    return response_request
+    const response_request: AbacusResponse<DocumentResponse> = await response.json()
+    return response_request.result as DocumentResponse
   }
 
   // Obtener lista de archivos de una conversación
-  const getAllDocuments = async (deploymentConversationId: string): Promise<ListFilesResponse> => {
-    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/files'), {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ deploymentConversationId }),
-    })
-    const response_request: AbacusResponse<ListFilesResponse> = await response.json()
-    return response_request.result as ListFilesResponse
-  }
-
-  // Obtener el archivo de una conversación
-  const getOneDocument = async (requestId: string): Promise<ListFilesResponse> => {
-    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/upload-status/' + requestId), {
+  const getAllDocuments = async (conversationId: string): Promise<DocumentResponse[]> => {
+    const response = await fetchWithTokenRefresh(getApiUrl(`/conversations/${conversationId}/documents`), {
       method: 'GET',
       headers: getAuthHeaders(),
     })
-    const response_request: any = await response.json()
-    if (response_request.status == 'SUCCESS') {
-      const new_response = response_request.result as AbacusResponse<ListFilesResponse>
-      return new_response.result as ListFilesResponse
-    }
-    throw new Error('Error al obtener el archivo de la conversación')
+    const response_request: AbacusResponse<DocumentResponse[]> = await response.json()
+    return response_request.result as DocumentResponse[]
+  }
+
+  // Obtener el archivo de una conversación
+  const getOneDocument = async (documentId: string): Promise<DocumentResponse> => {
+    const response = await fetchWithTokenRefresh(getApiUrl('/documents/' + documentId), {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    })
+    const response_request: AbacusResponse<DocumentResponse> = await response.json()
+    return response_request.result as DocumentResponse
   }
 
   // desvincular documentos de una conversación
-  const detachDocumentsConversation = async (request: DetachDocumentsRequest): Promise<ListFilesResponse> => {
+  const detachDocumentsConversation = async (request: DetachDocumentsRequest): Promise<DocumentResponse[]> => {
     const response = await fetchWithTokenRefresh(getApiUrl('/conversations/detach/documents'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })
-    const response_request: AbacusResponse<ListFilesResponse> = await response.json()
-    console.log('response_request -> ', response_request)
-    if (!response_request.success) {
-      throw new Error(response_request.error)
-    }
-    return response_request.result as ListFilesResponse
+    const response_request: AbacusResponse<DocumentResponse[]> = await response.json()
+    return response_request.result as DocumentResponse[]
   }
 
   // adjuntar documentos a una conversación
-  const attachDocumentsToConversation = async (request: AttachDocumentsRequest): Promise<ListFilesResponse> => {
-    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/attach-documents'), {
+  const attachDocumentsToConversation = async (request: AttachDocumentsRequest): Promise<boolean> => {
+    const response = await fetchWithTokenRefresh(getApiUrl('/conversations/attach/documents'), {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(request),
     })
-    const response_request: AbacusResponse<ListFilesResponse> = await response.json()
-    return response_request.result as ListFilesResponse
+    const response_request: AbacusResponse<boolean> = await response.json()
+    return response_request.result as boolean
   }
 
   const abort = () => {
