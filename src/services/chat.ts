@@ -183,10 +183,10 @@ export function useChats() {
       const newConversation = await createConversation(newChat)
       setActiveChat(newConversation)
       await addSystemMessage(await useConfig().getCurrentSystemMessage())
-      filesUploaded.value = []
+      // filesUploaded.value = []
       // documentsUploaded.value = []
     } catch (error) {
-      console.error('Failed to start a new chat:', error)
+      console.error('Failed to craete a new chat:', error)
     }
   }
 

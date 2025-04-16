@@ -74,7 +74,7 @@ let failedQueue: Array<{
   resolve: (token: string) => void
   reject: (error: any) => void
 }> = []
-const { showError, showSuccess } = useNotification()
+const { showError } = useNotification()
 
 const processQueue = (error: any = null) => {
   failedQueue.forEach(prom => {
@@ -148,7 +148,6 @@ export const refreshAuthToken = async (): Promise<string> => {
 
     const data = await response.json()
     setAuthToken(data.result.token, data.result.refresh_token)
-    showSuccess('Token refrescado exitosamente', 'Autenticación')
     processQueue()
     return data.result.token
   } catch (error) {

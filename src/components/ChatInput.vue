@@ -53,9 +53,10 @@ const onSubmit = async () => {
       }
       await attachDocuments()
       addUserMessage(userInput.value.trim()).then(() => {
+        flag.value = true
         isAiResponding.value = false
+        filesUploaded.value = []
       })
-      filesUploaded.value = []
       await getAllDocumentsUploaded()
     }
     userInput.value = ''
@@ -70,13 +71,15 @@ const shouldSubmit = ({ key, shiftKey }: KeyboardEvent): boolean => {
 }
 
 const onKeydown = (event: KeyboardEvent) => {
+  if (shouldSubmit(event)) {
+    event.preventDefault()
+  }
   if (shouldSubmit(event) && flag.value) {
     // Pressing enter while the ai is responding should not abort the request
     if (isAiResponding.value || isUploadingFiles.value) {
       return
     }
     flag.value = false
-    event.preventDefault()
     onSubmit()
   }
 }
@@ -86,6 +89,11 @@ const handleCompositionStart = () => {
 }
 
 const handleCompositionEnd = () => {
+  flag.value = true
+}
+
+const handlePaste = () => {
+  // Asegurarnos que flag.value sea true después de pegar texto
   flag.value = true
 }
 
@@ -326,6 +334,7 @@ const isImage = (file: File): boolean => {
         @keydown="onKeydown"
         @compositionstart="handleCompositionStart"
         @compositionend="handleCompositionEnd"
+        @paste="handlePaste"
       ></textarea>
       <button
         type="submit"

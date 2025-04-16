@@ -1,14 +1,14 @@
 :root {
-  --toastify-color-light: #fff;
-  --toastify-color-dark: #121212;
-  --toastify-color-info: #3498db;
-  --toastify-color-success: #07bc0c;
-  --toastify-color-warning: #f1c40f;
+  --toastify-color-light: #ffffff;
+  --toastify-color-dark: #1a1a1a;
+  --toastify-color-info: #4a90e2;
+  --toastify-color-success: #2ecc71;
+  --toastify-color-warning: #f39c12;
   --toastify-color-error: #e74c3c;
 
   /* Colores del texto */
-  --toastify-text-color-light: #757575;
-  --toastify-text-color-dark: #fff;
+  --toastify-text-color-light: #4a4a4a;
+  --toastify-text-color-dark: #f5f5f5;
 
   /* Fuente */
   --toastify-font-family: system-ui, -apple-system, sans-serif;
