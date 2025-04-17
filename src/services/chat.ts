@@ -109,6 +109,7 @@ export function useChats() {
         if (activeChat.value) {
           await switchModel(activeChat.value.llm_model_id)
         }
+        // Si no encuentra el chat este se añade al comienzo
         const chatExists = chats.value.some((c) => c.id === chat.id)
         if (!chatExists) {
           chats.value.unshift(chat)

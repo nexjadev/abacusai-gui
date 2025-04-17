@@ -51,18 +51,19 @@ const onSubmit = async () => {
       if (!activeChat.value?.id) {
         await createNewChat()
       }
+      isAiResponding.value = true
       await attachDocuments()
       addUserMessage(userInput.value.trim()).then(() => {
         flag.value = true
         isAiResponding.value = false
-        filesUploaded.value = []
       })
-      await getAllDocumentsUploaded()
+      userInput.value = ''
+      filesUploaded.value = []
+      getAllDocumentsUploaded()
     }
-    userInput.value = ''
-    if (!isSystemMessage.value) {
-      isAiResponding.value = true
-    }
+    // if (!isSystemMessage.value) {
+    //   isAiResponding.value = true
+    // }
   }
 }
 

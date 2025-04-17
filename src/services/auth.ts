@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { currentUserId, getApiUrl } from './appConfig'
 import { useNotification } from './notification'
 import * as forge from 'node-forge'
-import { User } from "../dtos/user.dto.ts";
+import { User } from '../dtos/user.dto.ts'
 
 // Clave secreta para encriptación (en producción debería estar en variables de entorno)
 const ENCRYPTION_KEY = 'a8D3f5jXzQp2L9Nv'
@@ -26,7 +26,9 @@ const encryptData = (data: string): string => {
   const tag = cipher.mode.tag!
 
   // Combinar todos los componentes
-  const encrypted = forge.util.encode64(salt + iv + cipher.output.getBytes() + tag.getBytes())
+  const encrypted = forge.util.encode64(
+    salt + iv + cipher.output.getBytes() + tag.getBytes(),
+  )
 
   return encrypted
 }
@@ -49,7 +51,7 @@ const decryptData = (encryptedData: string): string => {
     const decipher = forge.cipher.createDecipher('AES-GCM', key)
     decipher.start({
       iv: iv,
-      tag: forge.util.createBuffer(tag)
+      tag: forge.util.createBuffer(tag),
     })
 
     decipher.update(forge.util.createBuffer(encrypted))
@@ -77,7 +79,7 @@ let failedQueue: Array<{
 const { showError } = useNotification()
 
 const processQueue = (error: any = null) => {
-  failedQueue.forEach(prom => {
+  failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error)
     } else {
@@ -224,7 +226,7 @@ export const useAuth = () => {
         // password: encryptData(credentials.password),
         username: credentials.username,
         password: credentials.password,
-        rememberMe: credentials.rememberMe
+        rememberMe: credentials.rememberMe,
       }
 
       const response = await fetch(getApiUrl('/auth/login'), {
@@ -238,7 +240,9 @@ export const useAuth = () => {
 
       if (!response.ok) {
         const errorData = await response.json()
-        showError(errorData.detail?.mensaje || '')
+        if (errorData.detail && errorData.detail.message) {
+          showError(errorData.detail.message)
+        }
         return false
       }
 
@@ -249,7 +253,7 @@ export const useAuth = () => {
       setAuthToken(result.token, result.refresh_token, credentials.rememberMe)
 
       user.value = result.user
-      currentUserId.value =  result.user.id
+      currentUserId.value = result.user.id
       isAuthenticated.value = true
 
       return true
@@ -281,6 +285,6 @@ export const useAuth = () => {
     getAuthToken,
     setAuthToken,
     clearAuthToken,
-    getAuthHeaders
+    getAuthHeaders,
   }
 }
