@@ -10,10 +10,10 @@ import { useAI } from './useAi.ts'
 import {
   useApi,
 } from './api.ts'
-import {LlmModel} from "../dtos/llm-model.dto.ts";
-import {Conversation, CreateConversationRequest, DeleteConversationRequest, RenameConversationRequest, TitleConversationRequest} from "../dtos/conversation.dto.ts";
-import {Message, MessageChatRequest} from "../dtos/message.dto.ts";
-import {ChatFinalResponse, ChatResponseSegment} from "../dtos/steam-message.dto.ts";
+import { LlmModel } from "../dtos/llm-model.dto.ts";
+import { Conversation, CreateConversationRequest, DeleteConversationRequest, RenameConversationRequest, TitleConversationRequest } from "../dtos/conversation.dto.ts";
+import { Message, MessageChatRequest } from "../dtos/message.dto.ts";
+import { ChatFinalResponse, ChatResponseSegment } from "../dtos/steam-message.dto.ts";
 import { AttachDocumentsRequest, DetachDocumentsRequest, DocumentResponse } from '../dtos/document.dto.ts';
 
 const chats = ref<Conversation[]>([])
