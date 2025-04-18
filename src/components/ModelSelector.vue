@@ -2,7 +2,7 @@
 import { IconRefresh, IconSearch } from '@tabler/icons-vue'
 import { useChats } from '../services/chat.ts'
 import { useAI } from '../services/useAi.ts'
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useConfig } from '../services/appConfig.ts'
 import {LlmModel} from "../dtos/llm-model.dto.ts";
 
@@ -46,6 +46,21 @@ const toggleDropdown = () => {
   isOpen.value = !isOpen.value
 }
 
+const handleClickOutside = (event: MouseEvent) => {
+  const dropdown = document.querySelector('.model-selector-dropdown')
+  if (dropdown && !dropdown.contains(event.target as Node)) {
+    isOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
 type Props = {
   disabled?: boolean
 }
@@ -53,7 +68,7 @@ const { disabled = false } = defineProps<Props>()
 </script>
 
 <template>
-  <div class="relative text-gray-900 dark:text-gray-100">
+  <div class="relative text-gray-900 dark:text-gray-100 model-selector-dropdown">
     <!-- Selected Model Button -->
     <button
       @click="toggleDropdown"
